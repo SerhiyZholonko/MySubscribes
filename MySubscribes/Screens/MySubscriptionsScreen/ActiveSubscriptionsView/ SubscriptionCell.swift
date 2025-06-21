@@ -12,6 +12,7 @@ struct SubscriptionCell: View {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray)
+                .opacity(0.2)
                 .frame( height: 100)
             HStack {
                 
