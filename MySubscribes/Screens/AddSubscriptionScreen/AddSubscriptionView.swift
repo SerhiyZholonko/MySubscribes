@@ -11,7 +11,15 @@ struct AddSubscriptionView: View {
     var body: some View {
         VStack {
             ASHeaderView()
-            Spacer()
+            ZStack(alignment: .top){
+                Color(.blue)
+                    .opacity(0.1)
+                VStack {
+                    ServiceNameView()
+                    MonthlyCostView()
+                }
+               
+            }
         }
     }
 }
