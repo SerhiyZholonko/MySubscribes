@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MonthlyCostView: View {
-    @State var monhlyCostText: String = "0"
+    @State var monhlyCostText: String = "0.00"
 
     var body: some View {
         VStack(alignment: .leading) {

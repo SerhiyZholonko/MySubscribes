@@ -21,7 +21,7 @@ struct STabView: View {
                           Image(systemName: "plus")
                           Text("Add")
                       }
-            Text("Calendar")
+            PaymentCalendarView()
                 .tabItem {
                     Image(systemName: "calendar")
                     Text("Calendar")

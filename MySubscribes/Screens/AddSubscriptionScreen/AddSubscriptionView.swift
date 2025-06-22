@@ -18,6 +18,7 @@ struct AddSubscriptionView: View {
                     ServiceNameView()
                     MonthlyCostView()
                     BillingPeriodView()
+                    NextPaymentDateView()
                 }
                
             }
