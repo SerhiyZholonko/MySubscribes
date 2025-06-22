@@ -14,9 +14,10 @@ struct AddSubscriptionView: View {
             ZStack(alignment: .top){
                 Color(.blue)
                     .opacity(0.1)
-                VStack {
+                ScrollView {
                     ServiceNameView()
                     MonthlyCostView()
+                    BillingPeriodView()
                 }
                
             }
