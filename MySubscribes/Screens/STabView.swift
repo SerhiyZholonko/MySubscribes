@@ -26,7 +26,7 @@ struct STabView: View {
                     Image(systemName: "calendar")
                     Text("Calendar")
                 }
-            Text("Analytics")
+            AnalyticsView()
                 .tabItem {
                     Image(systemName: "chart.bar.xaxis")
                     Text("Analitics")
