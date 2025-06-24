@@ -11,7 +11,7 @@ struct SubscriptionCell: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color.gray)
+                .fill(Color.blue)
                 .opacity(0.2)
                 .frame( height: 100)
             HStack {

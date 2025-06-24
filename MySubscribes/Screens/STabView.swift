@@ -32,12 +32,11 @@ struct STabView: View {
                     Text("Analitics")
 
                 }
-           // calendar
                 
               }
         .tint(.purple)
    
-   .padding()
+//   .padding()
     }
 }
 
