@@ -12,6 +12,7 @@ struct MySubscribesApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .modelContainer(for: Subscription.self)
         }
     }
 }

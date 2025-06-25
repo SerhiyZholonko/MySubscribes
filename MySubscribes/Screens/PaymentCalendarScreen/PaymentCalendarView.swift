@@ -22,6 +22,8 @@ struct PaymentCalendarView: View {
     ]
     
     var body: some View {
+        ZStack {
+            Color(.blue).opacity(0.1)
         VStack {
             // Header
             HStack {
@@ -51,13 +53,13 @@ struct PaymentCalendarView: View {
                     let day = calendar.component(.day, from: date)
                     let isSelected = calendar.isDate(date, inSameDayAs: selectedDate ?? Date())
                     let isPaymentDate = paymentDates.contains { calendar.isDate($0, inSameDayAs: date) }
-
+                    
                     Text("\(day)")
                         .frame(height: 40)
                         .frame(maxWidth: .infinity)
                         .background(
                             isSelected ? Color.blue.opacity(0.3) :
-                            (isPaymentDate ? Color.green.opacity(0.3) : Color.clear)
+                                (isPaymentDate ? Color.green.opacity(0.3) : Color.clear)
                         )
                         .clipShape(Circle())
                         .onTapGesture {
@@ -68,6 +70,7 @@ struct PaymentCalendarView: View {
             Spacer()
         }
         .padding()
+    }
     }
 
     // Helpers

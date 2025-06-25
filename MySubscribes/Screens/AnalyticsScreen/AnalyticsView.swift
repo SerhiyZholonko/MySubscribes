@@ -28,7 +28,7 @@ struct AnalyticsView: View {
                         titleTextOverlayView(title: "Total Monthly", price: 78)
                         titleTextOverlayView(title: "Total Services", price: 3)
                     }
-                    SpendingBreakdownView()
+//                    SpendingBreakdownView()
                         .overlay {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.gray, lineWidth: 1)

@@ -7,25 +7,25 @@
 
 import SwiftUI
 
-struct AddSubscriptionView: View {
-    var body: some View {
-        VStack {
-            ASHeaderView()
-            ZStack(alignment: .top){
-                Color(.blue)
-                    .opacity(0.1)
-                ScrollView {
-                    ServiceNameView()
-                    MonthlyCostView()
-                    BillingPeriodView()
-                    NextPaymentDateView()
-                }
-               
-            }
-        }
-    }
-}
+//struct AddSubscriptionView: View {
+//    var body: some View {
+//        VStack {
+//            ASHeaderView()
+//            ZStack(alignment: .top){
+//                Color(.blue)
+//                    .opacity(0.1)
+//                ScrollView {
+//                    ServiceNameView()
+//                    MonthlyCostView()
+//                    BillingPeriodView()
+//                    NextPaymentDateView()
+//                }
+//               
+//            }
+//        }
+//    }
+//}
 
-#Preview {
-    AddSubscriptionView()
-}
+//#Preview {
+//    AddSubscriptionView()
+//}

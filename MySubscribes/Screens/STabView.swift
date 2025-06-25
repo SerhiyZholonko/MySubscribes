@@ -30,13 +30,9 @@ struct STabView: View {
                 .tabItem {
                     Image(systemName: "chart.bar.xaxis")
                     Text("Analitics")
-
                 }
-                
               }
         .tint(.purple)
-   
-//   .padding()
     }
 }
 
