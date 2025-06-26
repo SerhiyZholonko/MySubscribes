@@ -6,20 +6,14 @@
 //
 
 import SwiftUI
-
+import SwiftData
 
 struct PaymentCalendarView: View {
     @State private var selectedDate: Date? = nil
     @State private var currentMonth: Date = Date()
-    
-    let calendar = Calendar.current
+    @Query private var subscriptions: [Subscription]
 
-    // Example payment dates
-    let paymentDates: [Date] = [
-        Calendar.current.date(from: DateComponents(year: 2025, month: 6, day: 5))!,
-        Calendar.current.date(from: DateComponents(year: 2025, month: 6, day: 12))!,
-        Calendar.current.date(from: DateComponents(year: 2025, month: 6, day: 24))!
-    ]
+    let calendar = Calendar.current
     
     var body: some View {
         ZStack {
@@ -52,7 +46,8 @@ struct PaymentCalendarView: View {
                 ForEach(daysInMonth(), id: \.self) { date in
                     let day = calendar.component(.day, from: date)
                     let isSelected = calendar.isDate(date, inSameDayAs: selectedDate ?? Date())
-                    let isPaymentDate = paymentDates.contains { calendar.isDate($0, inSameDayAs: date) }
+                    
+                    let isPaymentDate = subscriptions.map { $0.nextPaymentDate }.contains { calendar.isDate($0, inSameDayAs: date) }
                     
                     Text("\(day)")
                         .frame(height: 40)
@@ -111,6 +106,7 @@ struct PaymentCalendarView: View {
         return days.filter { $0 != Date.distantPast }
     }
 }
+
 #Preview {
     PaymentCalendarView()
 }
