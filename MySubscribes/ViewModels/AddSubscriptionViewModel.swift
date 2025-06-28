@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 // MARK: - ViewModel
 @Observable
@@ -44,6 +45,7 @@ class AddSubscriptionViewModel {
     }
     
     private func validateInput() -> Bool {
+        
         guard !serviceNameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             showAlert(message: "Please enter a service name")
             return false
@@ -61,6 +63,10 @@ class AddSubscriptionViewModel {
         
         do {
             try modelContext.save()
+            
+            // Schedule notification after successful save using NotificationManager
+            NotificationManager.shared.scheduleSubscriptionNotification(for: subscription)
+            
             showAlert(message: "Subscription saved successfully!") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     self.resetForm()
@@ -71,7 +77,6 @@ class AddSubscriptionViewModel {
             showAlert(message: "Failed to save subscription: \(error.localizedDescription)")
         }
     }
-    
     private func showAlert(message: String, completion: (() -> Void)? = nil) {
         alertMessage = message
         showingAlert = true

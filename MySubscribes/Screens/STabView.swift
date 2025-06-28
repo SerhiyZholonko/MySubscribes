@@ -15,7 +15,6 @@ struct STabView: View {
                           Image(systemName: "list.bullet")
                           Text("Subscriptions")
                       }
-                  
             AddSubscriptionView()
                       .tabItem {
                           Image(systemName: "plus")

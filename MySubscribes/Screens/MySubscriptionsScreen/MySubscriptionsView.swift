@@ -11,7 +11,7 @@ import SwiftData
 
 // MARK: - Views
 struct MySubscriptionsView: View {
-    @StateObject private var viewModel = SubscriptionsViewModel()
+    @State private var viewModel = SubscriptionsViewModel()
     @Environment(\.modelContext) private var modelContext
     @Query private var subscriptions: [Subscription]
     
@@ -60,14 +60,12 @@ struct MySubscriptionsView: View {
     }
 }
 
-
 // MARK: - Date Formatters
 private let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
     return formatter
 }()
-
 
 #Preview {
     MySubscriptionsView()
