@@ -10,6 +10,13 @@ import SwiftUI
 struct SubscriptionCell: View {
     let subscription: Subscription
     let onDelete: () -> Void
+    @StateObject private var viewModel: SubscriptionCellViewModel
+    
+    init(subscription: Subscription, onDelete: @escaping () -> Void) {
+        self.subscription = subscription
+        self.onDelete = onDelete
+        self._viewModel = StateObject(wrappedValue: SubscriptionCellViewModel(subscription: subscription))
+    }
     
     var body: some View {
         ZStack {
@@ -22,11 +29,10 @@ struct SubscriptionCell: View {
                 // Service Icon
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(serviceColor)
+                        .fill(viewModel.serviceColor)
                         .frame(width: 80, height: 80)
                     
-                    // You can customize this based on service name
-                    Image(systemName: serviceIcon)
+                    Image(systemName: viewModel.serviceIcon)
                         .foregroundStyle(.white)
                         .font(.system(size: 30))
                 }
@@ -38,7 +44,7 @@ struct SubscriptionCell: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                     
-                    Text("Next: \(subscription.nextPaymentDate, formatter: shortDateFormatter) • \(daysUntilPayment) days")
+                    Text("Next: \(viewModel.formattedNextPaymentDate) • \(viewModel.daysUntilPayment) days")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -48,7 +54,7 @@ struct SubscriptionCell: View {
                 // Cost and Delete
                 HStack(spacing: 12) {
                     VStack(alignment: .trailing) {
-                        Text("$\(subscription.monthlyCost, specifier: "%.2f")")
+                        Text("$\(viewModel.formattedCost)")
                             .font(.headline)
                             .fontWeight(.semibold)
                         
@@ -68,53 +74,11 @@ struct SubscriptionCell: View {
         }
         .padding(.horizontal)
     }
-    
-    // Computed properties for dynamic styling
-    private var serviceColor: Color {
-        switch subscription.serviceName.lowercased() {
-        case "netflix":
-            return .red
-        case "spotify":
-            return .green
-        case "apple music":
-            return .pink
-        case "disney+", "disney plus":
-            return .blue
-        case "hulu":
-            return .green
-        case "amazon prime":
-            return .orange
-        default:
-            return .blue
-        }
-    }
-    
-    private var serviceIcon: String {
-        switch subscription.serviceName.lowercased() {
-        case "netflix":
-            return "tv"
-        case "spotify", "apple music":
-            return "music.note"
-        case "disney+", "disney plus":
-            return "star.fill"
-        case "hulu":
-            return "play.tv"
-        case "amazon prime":
-            return "shippingbox"
-        default:
-            return "star.fill"
-        }
-    }
-    
-    private var daysUntilPayment: Int {
-        let calendar = Calendar.current
-        let today = Date()
-        let days = calendar.dateComponents([.day], from: today, to: subscription.nextPaymentDate).day ?? 0
-        return max(0, days)
-    }
+    private let shortDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter
+    }()
 }
-private let shortDateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "MMM d"
-    return formatter
-}()
+
+

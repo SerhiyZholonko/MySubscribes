@@ -181,28 +181,6 @@ struct SpendingBreakdownView: View {
                 .frame(height: 300)
                 .frame(maxWidth: .infinity)
             }
-            
-            // Debug info (you can remove this later)
-//            if !subscriptions.isEmpty {
-//                VStack(alignment: .leading, spacing: 5) {
-//                    Text("Debug Info:")
-//                        .font(.caption)
-//                        .fontWeight(.semibold)
-//                    
-//                    ForEach(subscriptions, id: \.serviceName) { subscription in
-//                        let cost = calculateCostForPeriod(subscription: subscription, period: selectedPeriod)
-//                        Text("\(subscription.serviceName): $\(cost, specifier: "%.2f") (\(selectedPeriod.rawValue.lowercased()))")
-//                            .font(.caption2)
-//                            .foregroundColor(.secondary)
-//                    }
-//                    
-//                    Text("Total: $\(chartData.map(\.cost).reduce(0, +), specifier: "%.2f")")
-//                        .font(.caption)
-//                        .fontWeight(.medium)
-//                        .foregroundColor(.blue)
-//                }
-//                .padding(.top, 10)
-//            }
         }
         .padding()
     }

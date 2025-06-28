@@ -20,16 +20,13 @@ struct SHeader: View {
             
             Spacer()
             Button {
-                
+                // Handle notification action
             } label: {
                 Image(systemName: "bell")
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(.black)
             }
-            
-            
         }
         .padding()
-       
     }
 }

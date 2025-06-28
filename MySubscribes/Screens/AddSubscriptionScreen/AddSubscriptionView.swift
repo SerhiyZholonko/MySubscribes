@@ -44,11 +44,6 @@ struct AddSubscriptionView: View {
                 dismiss()
             }
         }
-//        .alert("Subscription", isPresented: $viewModel.showingAlert) {
-//            Button("OK") { }
-//        } message: {
-//            Text(viewModel.alertMessage)
-//        }
         .overlay {
             if viewModel.showingAlert {
                 VStack {

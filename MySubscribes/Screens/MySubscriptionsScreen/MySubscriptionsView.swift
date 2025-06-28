@@ -8,41 +8,57 @@
 import SwiftUI
 import SwiftData
 
-struct MySubscriptionsView: View {
-    @Query private var subscriptions: [Subscription]
-    @Environment(\.modelContext) private var modelContext
 
+// MARK: - Views
+struct MySubscriptionsView: View {
+    @StateObject private var viewModel = SubscriptionsViewModel()
+    @Environment(\.modelContext) private var modelContext
+    @Query private var subscriptions: [Subscription]
+    
     var body: some View {
         VStack {
             SHeader()
-            STotalMonthlySpendingView()
+            STotalMonthlySpendingView(viewModel: viewModel)
+            
             ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(subscriptions) { subscription in
-                        SubscriptionCell(
-                            subscription: subscription,
-                            onDelete: {
-                                deleteSubscription(subscription)
-                            }
-                        )
+                if viewModel.subscriptions.isEmpty {
+                    Text("No subscriptions yet")
+                        .foregroundColor(.secondary)
+                } else {
+                    LazyVStack(spacing: 10) {
+                        ForEach(viewModel.subscriptions) { subscription in
+                            SubscriptionCell(
+                                subscription: subscription,
+                                onDelete: {
+                                    viewModel.confirmDelete(subscription)
+                                }
+                            )
+                        }
                     }
+                    .padding(.top)
                 }
-                .padding(.top)
             }
             Spacer()
         }
-    }
-    
-    private func deleteSubscription(_ subscription: Subscription) {
-        modelContext.delete(subscription)
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to delete subscription: \(error)")
+        .onAppear {
+            viewModel.setModelContext(modelContext)
+            viewModel.subscriptions = subscriptions
+        }
+        .onChange(of: subscriptions) { oldValue, newValue in
+            viewModel.subscriptions = newValue
+        }
+        .alert("Delete Subscription", isPresented: $viewModel.showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let subscription = viewModel.subscriptionToDelete {
+                    viewModel.deleteSubscription(subscription)
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete this subscription?")
         }
     }
 }
-
 
 
 // MARK: - Date Formatters
