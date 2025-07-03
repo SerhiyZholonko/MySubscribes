@@ -1,9 +1,9 @@
-//
+
 //  AddSubscriptionViewModel.swift
 //  MySubscribes
 //
 //  Created by apple on 26.06.2025.
-//
+
 
 import SwiftUI
 import SwiftData
@@ -16,11 +16,26 @@ class AddSubscriptionViewModel {
     var monthlyCostText: String = "0.00"
     var selectedPeriod = "Monthly"
     var nextPaymentDate = Date()
+    var isRecurring = true
+    var endDate: Date? = nil
+    var reminderDays = 1
+    var selectedCategory = "General"
+    var notes = ""
+    var selectedColor = "blue"
     var showingAlert = false
     var alertMessage = ""
     var shouldDismiss = false
     
     private var modelContext: ModelContext?
+    
+    let categories = ["General", "Entertainment", "Software", "Health", "Education", "Shopping", "Utilities", "Gaming"]
+    let colors = ["blue", "purple", "red", "green", "orange"]
+    let reminderOptions = [
+        (1, "1 day before"),
+        (3, "3 days before"),
+        (7, "1 week before"),
+        (14, "2 weeks before")
+    ]
     
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
@@ -38,7 +53,13 @@ class AddSubscriptionViewModel {
             serviceName: serviceNameText.trimmingCharacters(in: .whitespacesAndNewlines),
             monthlyCost: cost,
             billingPeriod: selectedPeriod,
-            nextPaymentDate: nextPaymentDate
+            nextPaymentDate: nextPaymentDate,
+            isRecurring: isRecurring,
+            endDate: isRecurring ? endDate : nil,
+            reminderDays: reminderDays,
+            category: selectedCategory,
+            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
+            color: selectedColor
         )
         
         saveToDatabase(subscription: subscription)
@@ -64,8 +85,8 @@ class AddSubscriptionViewModel {
         do {
             try modelContext.save()
             
-            // Schedule notification after successful save using NotificationManager
-            NotificationManager.shared.scheduleSubscriptionNotification(for: subscription)
+            // Schedule advanced notifications after successful save
+            NotificationManager.shared.scheduleAdvancedNotifications(for: subscription)
             
             showAlert(message: "Subscription saved successfully!") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -88,6 +109,12 @@ class AddSubscriptionViewModel {
         monthlyCostText = "0.00"
         selectedPeriod = "Monthly"
         nextPaymentDate = Date()
+        isRecurring = true
+        endDate = nil
+        reminderDays = 1
+        selectedCategory = "General"
+        notes = ""
+        selectedColor = "blue"
         showingAlert = false
         alertMessage = ""
         shouldDismiss = false

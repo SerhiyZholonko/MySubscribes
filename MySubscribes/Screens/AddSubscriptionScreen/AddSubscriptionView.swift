@@ -26,38 +26,113 @@ struct AddSubscriptionView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var viewModel = AddSubscriptionViewModel()
+    @State private var showContent = false
     
     var body: some View {
-        VStack {
-            ASHeaderView(
-                onSave: {
-                    hideKeyboard() // Dismiss keyboard before saving
-                    viewModel.saveSubscription()
-                },
-                onCancel: {
-                    hideKeyboard() // Dismiss keyboard before canceling
-                    dismiss()
-                }
-            )
-            
-            ZStack(alignment: .top) {
-                Color(.blue)
-                    .opacity(0.1)
-                ScrollView {
-                    ServiceNameView(serviceNameText: $viewModel.serviceNameText)
-                    MonthlyCostView(monthlyCostText: $viewModel.monthlyCostText)
-                    BillingPeriodView(selectedPeriod: $viewModel.selectedPeriod)
-                    NextPaymentDateView(nextPaymentDate: $viewModel.nextPaymentDate)
+        NavigationView {
+            ZStack {
+                // Background
+                DesignSystem.Colors.backgroundGradient
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    // Header
+                    ModalHeaderView(
+                        title: "Add Subscription",
+                        onSave: {
+                            hideKeyboard()
+                            viewModel.saveSubscription()
+                        },
+                        onCancel: {
+                            hideKeyboard()
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                dismiss()
+                            }
+                        }
+                    )
+                    .opacity(showContent ? 1.0 : 0)
+                    .offset(y: showContent ? 0 : -30)
+                    
+                    // Form Content
+                    ScrollView {
+                        VStack(spacing: DesignSystem.Spacing.lg) {
+                            // Basic Information
+                            ServiceNameView(serviceNameText: $viewModel.serviceNameText)
+                                .opacity(showContent ? 1.0 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                            
+                            MonthlyCostView(monthlyCostText: $viewModel.monthlyCostText)
+                                .opacity(showContent ? 1.0 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                            
+                            BillingPeriodView(selectedPeriod: $viewModel.selectedPeriod)
+                                .opacity(showContent ? 1.0 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                            
+                            // Enhanced Date Picker
+                            EnhancedDatePickerView(nextPaymentDate: $viewModel.nextPaymentDate)
+                                .opacity(showContent ? 1.0 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                            
+                            // Repetition Settings
+                            RepetitionSettingsView(
+                                isRecurring: $viewModel.isRecurring,
+                                endDate: $viewModel.endDate
+                            )
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                            
+                            // Category Selection
+                            CategorySelectionView(
+                                selectedCategory: $viewModel.selectedCategory,
+                                categories: viewModel.categories
+                            )
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                            
+                            // Color Selection
+                            ColorSelectionView(
+                                selectedColor: $viewModel.selectedColor,
+                                colors: viewModel.colors
+                            )
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                            
+                            // Reminder Settings
+                            ReminderSettingsView(
+                                reminderDays: $viewModel.reminderDays,
+                                reminderOptions: viewModel.reminderOptions
+                            )
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                            
+                            // Notes
+                            NotesView(notes: $viewModel.notes)
+                                .opacity(showContent ? 1.0 : 0)
+                                .offset(y: showContent ? 0 : 20)
+                        }
+                        .padding(.horizontal, DesignSystem.Spacing.md)
+                        .padding(.top, DesignSystem.Spacing.lg)
+                        .padding(.bottom, DesignSystem.Spacing.xxl)
+                    }
                 }
             }
         }
-        .dismissKeyboardOnTap() // Apply keyboard dismissal
+        .navigationBarHidden(true)
+        .dismissKeyboardOnTap()
         .onAppear {
             viewModel.setModelContext(modelContext)
+            
+            // Animate content appearance
+            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
+                showContent = true
+            }
         }
         .onChange(of: viewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
-                dismiss()
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    dismiss()
+                }
             }
         }
         .overlay {
@@ -202,3 +277,73 @@ extension AddSubscriptionView {
         }
     }
 }
+
+// MARK: - Modal Header View
+struct ModalHeaderView: View {
+    let title: String
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    @State private var saveButtonPressed = false
+    @State private var cancelButtonPressed = false
+    
+    var body: some View {
+        HStack {
+            // Cancel Button
+            Button("Cancel") {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                onCancel()
+            }
+            .font(DesignSystem.Typography.body)
+            .foregroundColor(DesignSystem.Colors.textSecondary)
+            .scaleEffect(cancelButtonPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: cancelButtonPressed)
+            .onLongPressGesture(minimumDuration: 0) {
+                cancelButtonPressed = true
+            } onPressingChanged: { pressing in
+                cancelButtonPressed = pressing
+            }
+            
+            Spacer()
+            
+            // Title
+            Text(title)
+                .font(DesignSystem.Typography.title2)
+                .foregroundColor(DesignSystem.Colors.textPrimary)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            // Save Button
+            Button("Save") {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                impactFeedback.impactOccurred()
+                onSave()
+            }
+            .font(DesignSystem.Typography.body)
+            .fontWeight(.semibold)
+            .foregroundColor(.white)
+            .padding(.horizontal, DesignSystem.Spacing.md)
+            .padding(.vertical, DesignSystem.Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm)
+                    .fill(DesignSystem.Colors.primary)
+            )
+            .scaleEffect(saveButtonPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: saveButtonPressed)
+            .onLongPressGesture(minimumDuration: 0) {
+                saveButtonPressed = true
+            } onPressingChanged: { pressing in
+                saveButtonPressed = pressing
+            }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.lg)
+        .padding(.vertical, DesignSystem.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg)
+                .fill(.regularMaterial)
+        )
+        .padding(.horizontal, DesignSystem.Spacing.md)
+    }
+}
+

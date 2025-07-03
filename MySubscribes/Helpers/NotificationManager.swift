@@ -34,6 +34,15 @@ class NotificationManager: ObservableObject {
         }
     }
     
+    // MARK: - Schedule Advanced Notifications
+    func scheduleAdvancedNotifications(for subscription: Subscription) {
+        requestPermission { [weak self] granted in
+            if granted {
+                self?.createAdvancedNotificationRequests(for: subscription)
+            }
+        }
+    }
+    
     private func createNotificationRequest(for subscription: Subscription) {
         let content = UNMutableNotificationContent()
         content.title = "💳 Subscription Payment Due"
@@ -142,6 +151,183 @@ class NotificationManager: ObservableObject {
         center.removePendingNotificationRequests(withIdentifiers: identifiersToCancel)
         
         print("🗑️ Cancelled notifications for \(subscription.serviceName)")
+    }
+    
+    // MARK: - Advanced Notification Creation
+    private func createAdvancedNotificationRequests(for subscription: Subscription) {
+        // Cancel existing notifications first
+        cancelNotifications(for: subscription)
+        
+        // Schedule reminder notification
+        scheduleReminderNotification(for: subscription)
+        
+        // Schedule payment due notification
+        schedulePaymentDueNotification(for: subscription)
+        
+        // Schedule recurring notifications if applicable
+        if subscription.isRecurring {
+            scheduleRecurringAdvancedNotifications(for: subscription)
+        }
+    }
+    
+    private func scheduleReminderNotification(for subscription: Subscription) {
+        let reminderDate = Calendar.current.date(
+            byAdding: .day,
+            value: -subscription.reminderDays,
+            to: subscription.nextPaymentDate
+        ) ?? subscription.nextPaymentDate
+        
+        // Don't schedule reminder if it's in the past
+        guard reminderDate > Date() else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "🔔 Payment Reminder"
+        content.body = "\(subscription.serviceName) payment of $\(String(format: "%.2f", subscription.monthlyCost)) is due in \(subscription.reminderDays) day\(subscription.reminderDays == 1 ? "" : "s")"
+        content.sound = .default
+        content.categoryIdentifier = "SUBSCRIPTION_REMINDER"
+        content.userInfo = [
+            "subscriptionId": subscription.persistentModelID.hashValue,
+            "serviceName": subscription.serviceName,
+            "amount": subscription.monthlyCost,
+            "type": "reminder"
+        ]
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: reminderDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let identifier = "\(generateNotificationId(for: subscription))_reminder"
+        
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling reminder notification: \(error)")
+            } else {
+                print("✅ Reminder notification scheduled for \(subscription.serviceName)")
+            }
+        }
+    }
+    
+    private func schedulePaymentDueNotification(for subscription: Subscription) {
+        let content = UNMutableNotificationContent()
+        content.title = "💳 Payment Due Today"
+        content.body = "\(subscription.serviceName) payment of $\(String(format: "%.2f", subscription.monthlyCost)) is due today!"
+        content.sound = .default
+        content.badge = 1
+        content.categoryIdentifier = "SUBSCRIPTION_PAYMENT"
+        content.userInfo = [
+            "subscriptionId": subscription.persistentModelID.hashValue,
+            "serviceName": subscription.serviceName,
+            "amount": subscription.monthlyCost,
+            "category": subscription.category,
+            "type": "payment_due"
+        ]
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: subscription.nextPaymentDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let identifier = generateNotificationId(for: subscription)
+        
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling payment notification: \(error)")
+            } else {
+                print("✅ Payment notification scheduled for \(subscription.serviceName)")
+            }
+        }
+    }
+    
+    private func scheduleRecurringAdvancedNotifications(for subscription: Subscription) {
+        let calendar = Calendar.current
+        var currentDate = subscription.nextPaymentDate
+        let endDate = subscription.endDate
+        
+        // Schedule up to 12 future notifications or until end date
+        for i in 1...12 {
+            guard let nextDate = getNextPaymentDate(from: currentDate, period: subscription.billingPeriod, using: calendar) else {
+                break
+            }
+            
+            // Check if we've passed the end date
+            if let endDate = endDate, nextDate > endDate {
+                break
+            }
+            
+            // Schedule reminder
+            let reminderDate = calendar.date(byAdding: .day, value: -subscription.reminderDays, to: nextDate)
+            if let reminderDate = reminderDate, reminderDate > Date() {
+                scheduleRecurringReminder(for: subscription, date: reminderDate, index: i)
+            }
+            
+            // Schedule payment due notification
+            scheduleRecurringPayment(for: subscription, date: nextDate, index: i)
+            
+            currentDate = nextDate
+        }
+    }
+    
+    private func scheduleRecurringReminder(for subscription: Subscription, date: Date, index: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = "🔔 Payment Reminder"
+        content.body = "\(subscription.serviceName) payment of $\(String(format: "%.2f", subscription.monthlyCost)) is due in \(subscription.reminderDays) day\(subscription.reminderDays == 1 ? "" : "s")"
+        content.sound = .default
+        content.categoryIdentifier = "SUBSCRIPTION_REMINDER"
+        content.userInfo = [
+            "subscriptionId": subscription.persistentModelID.hashValue,
+            "serviceName": subscription.serviceName,
+            "amount": subscription.monthlyCost,
+            "recurringIndex": index,
+            "type": "reminder"
+        ]
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let identifier = "\(generateNotificationId(for: subscription))_reminder_\(index)"
+        
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling recurring reminder \(index): \(error)")
+            } else {
+                print("✅ Recurring reminder \(index) scheduled for \(subscription.serviceName)")
+            }
+        }
+    }
+    
+    private func scheduleRecurringPayment(for subscription: Subscription, date: Date, index: Int) {
+        let content = UNMutableNotificationContent()
+        content.title = "💳 Payment Due Today"
+        content.body = "\(subscription.serviceName) payment of $\(String(format: "%.2f", subscription.monthlyCost)) is due today!"
+        content.sound = .default
+        content.badge = 1
+        content.categoryIdentifier = "SUBSCRIPTION_PAYMENT"
+        content.userInfo = [
+            "subscriptionId": subscription.persistentModelID.hashValue,
+            "serviceName": subscription.serviceName,
+            "amount": subscription.monthlyCost,
+            "category": subscription.category,
+            "recurringIndex": index,
+            "type": "payment_due"
+        ]
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let identifier = "\(generateNotificationId(for: subscription))_payment_\(index)"
+        
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling recurring payment \(index): \(error)")
+            } else {
+                print("✅ Recurring payment \(index) scheduled for \(subscription.serviceName)")
+            }
+        }
     }
     
     // MARK: - Helper Methods

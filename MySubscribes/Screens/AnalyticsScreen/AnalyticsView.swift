@@ -10,59 +10,88 @@ import SwiftData
 
 struct AnalyticsView: View {
     @Query private var subscriptions: [Subscription]
+    @State private var showContent = false
+    @State private var selectedPeriod: AnalyticsPeriod = .monthly
     
-    // Computed property for total monthly spending
-    var totalMonthlySpending: Double {
-        subscriptions.reduce(0) { total, subscription in
-            switch subscription.billingPeriod.lowercased() {
-            case "weekly":
-                return total + (subscription.monthlyCost * 4.33) // Average weeks per month
-            case "yearly":
-                return total + (subscription.monthlyCost / 12)
-            default: // monthly
-                return total + subscription.monthlyCost
+    var body: some View {
+        ZStack {
+            // Background
+            DesignSystem.Colors.backgroundGradient
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Enhanced Header
+                EnhancedAnalyticsHeaderView(
+                    selectedPeriod: $selectedPeriod,
+                    totalSubscriptions: subscriptions.count
+                )
+                .opacity(showContent ? 1.0 : 0)
+                .offset(y: showContent ? 0 : -30)
+                
+                // Content
+                ScrollView {
+                    VStack(spacing: DesignSystem.Spacing.lg) {
+                        // Statistics Cards
+                        AnalyticsStatsCardsView(
+                            subscriptions: subscriptions,
+                            selectedPeriod: selectedPeriod
+                        )
+                        .opacity(showContent ? 1.0 : 0)
+                        .offset(y: showContent ? 0 : 20)
+                        
+                        // Enhanced Chart Section
+                        EnhancedSpendingChartView(
+                            subscriptions: subscriptions,
+                            selectedPeriod: selectedPeriod
+                        )
+                        .opacity(showContent ? 1.0 : 0)
+                        .offset(y: showContent ? 0 : 20)
+                        
+                        // Category Breakdown
+                        CategoryBreakdownView(subscriptions: subscriptions)
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                        
+                        // Spending Trends
+                        SpendingTrendsView(subscriptions: subscriptions)
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                        
+                        // Insights Section
+                        SpendingInsightsView(subscriptions: subscriptions)
+                            .opacity(showContent ? 1.0 : 0)
+                            .offset(y: showContent ? 0 : 20)
+                    }
+                    .padding(.horizontal, DesignSystem.Spacing.md)
+                    .padding(.bottom, DesignSystem.Spacing.xxl)
+                }
             }
         }
-    }
-    
-    // Computed property for total number of services
-    var totalServices: Int {
-        subscriptions.count
-    }
-
-    var body: some View {
-        VStack {
-            AnalyticsHeaderView()
-            ZStack {
-                Color.blue
-                    .opacity(0.1)
-                    .ignoresSafeArea()
-                
-                VStack(alignment: .leading) {
-                    HStack {
-                        titleTextOverlayView(
-                            title: "Total Monthly",
-                            price: totalMonthlySpending,
-                            isCurrency: true
-                        )
-                        titleTextOverlayView(
-                            title: "Total Services",
-                            price: Double(totalServices),
-                            isCurrency: false
-                        )
-                    }
-                    SpendingBreakdownView()
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.gray, lineWidth: 1)
-                        }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6)) {
+                showContent = true
             }
         }
     }
 }
+
+// MARK: - Analytics Period Enum
+enum AnalyticsPeriod: String, CaseIterable, Identifiable {
+    case weekly = "Weekly"
+    case monthly = "Monthly"
+    case yearly = "Yearly"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .weekly: return "calendar.day.timeline.left"
+        case .monthly: return "calendar"
+        case .yearly: return "calendar.year"
+        }
+    }
+}
+
 #Preview {
     AnalyticsView()
 }
