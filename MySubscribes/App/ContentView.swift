@@ -13,7 +13,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if hasSeenOnboarding {
-                STabView()
+                TabViewSelector()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)

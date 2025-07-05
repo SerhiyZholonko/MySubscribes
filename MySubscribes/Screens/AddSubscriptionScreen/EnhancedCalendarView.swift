@@ -43,7 +43,7 @@ struct EnhancedCalendarView: View {
                         Button(action: previousMonth) {
                             Image(systemName: "chevron.left")
                                 .font(.title2)
-                                .foregroundColor(DesignSystem.Colors.primary)
+                                .foregroundColor(DesignSystem.Colors.accent)
                         }
                         
                         Spacer()
@@ -206,7 +206,7 @@ struct CalendarDayView: View {
                 Text(dayNumber)
                     .font(.system(size: 16, weight: isSelected ? .bold : .medium))
                     .foregroundColor(
-                        isSelected ? .white :
+                        isSelected ? DesignSystem.Colors.textPrimary :
                         isToday ? DesignSystem.Colors.primary :
                         DesignSystem.Colors.textPrimary
                     )
@@ -231,7 +231,7 @@ struct CalendarDayView: View {
             .background(
                 Circle()
                     .fill(
-                        isSelected ? DesignSystem.Colors.primary :
+                        isSelected ? DesignSystem.Colors.primary.opacity(0.15) :
                         isToday ? DesignSystem.Colors.primary.opacity(0.1) :
                         Color.clear
                     )
@@ -239,8 +239,10 @@ struct CalendarDayView: View {
             .overlay(
                 Circle()
                     .stroke(
-                        isToday && !isSelected ? DesignSystem.Colors.primary : Color.clear,
-                        lineWidth: 2
+                        isSelected ? DesignSystem.Colors.primary :
+                        isToday && !isSelected ? DesignSystem.Colors.primary : 
+                        Color.clear,
+                        lineWidth: isSelected ? 2 : 2
                     )
             )
         }

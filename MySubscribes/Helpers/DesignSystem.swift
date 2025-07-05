@@ -12,26 +12,58 @@ struct DesignSystem {
     
     // MARK: - Colors
     struct Colors {
-        // Primary Brand Colors
-        static let primary = Color(red: 0.4, green: 0.2, blue: 0.8) // Deep Purple
-        static let primaryLight = Color(red: 0.5, green: 0.3, blue: 0.9) // Light Purple
-        static let accent = Color(red: 0.0, green: 0.8, blue: 0.6) // Teal
-        static let accentLight = Color(red: 0.0, green: 0.9, blue: 0.7) // Light Teal
+        // Primary Brand Colors - Adaptive for Light/Dark Mode
+        static let primary = Color("PrimaryColor")
+        static let primaryLight = Color("PrimaryLightColor")
+        static let primaryDark = Color("PrimaryDarkColor")
+        static let accent = Color("AccentColor")
+        static let accentLight = Color("AccentLightColor")
         
-        // Background Gradients
+        // Glass morphism colors - Adaptive
+        static let glassWhite = Color(light: Color.white.opacity(0.1), dark: Color.white.opacity(0.05))
+        static let glassBackground = Color(light: Color.white.opacity(0.05), dark: Color.black.opacity(0.1))
+        static let glassBorder = Color(light: Color.white.opacity(0.2), dark: Color.white.opacity(0.1))
+        
+        // Background Gradients - Adaptive for Light/Dark Mode
         static let backgroundGradient = LinearGradient(
             colors: [
-                Color(red: 0.95, green: 0.97, blue: 1.0), // Very light blue
-                Color(red: 0.98, green: 0.95, blue: 1.0)  // Very light purple
+                Color(light: Color(red: 0.94, green: 0.96, blue: 1.0), dark: Color(red: 0.06, green: 0.04, blue: 0.1)),
+                Color(light: Color(red: 0.96, green: 0.94, blue: 1.0), dark: Color(red: 0.04, green: 0.06, blue: 0.1)),
+                Color(light: Color(red: 0.98, green: 0.95, blue: 0.98), dark: Color(red: 0.02, green: 0.05, blue: 0.02))
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
         
+        static let premiumGradient = LinearGradient(
+            colors: [primary, primaryLight, accent.opacity(0.8)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let darkGradient = LinearGradient(
+            colors: [
+                Color(light: Color(red: 0.1, green: 0.1, blue: 0.2), dark: Color(red: 0.9, green: 0.9, blue: 0.8)),
+                Color(light: Color(red: 0.15, green: 0.1, blue: 0.25), dark: Color(red: 0.85, green: 0.9, blue: 0.75))
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        
         static let cardGradient = LinearGradient(
             colors: [
-                Color(red: 1.0, green: 1.0, blue: 1.0, opacity: 0.9),
-                Color(red: 0.98, green: 0.98, blue: 1.0, opacity: 0.8)
+                Color(light: Color.white.opacity(0.95), dark: Color(red: 0.3, green: 0.3, blue: 0.3)),
+                Color(light: Color.white.opacity(0.85), dark: Color(red: 0.25, green: 0.25, blue: 0.25)),
+                Color(light: Color(red: 0.98, green: 0.98, blue: 1.0, opacity: 0.8), dark: Color(red: 0.2, green: 0.2, blue: 0.2))
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        
+        static let glassGradient = LinearGradient(
+            colors: [
+                Color(light: Color.white.opacity(0.15), dark: Color.white.opacity(0.08)),
+                Color(light: Color.white.opacity(0.05), dark: Color.white.opacity(0.02))
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -49,10 +81,20 @@ struct DesignSystem {
         static let warning = Color(red: 1.0, green: 0.6, blue: 0.0)
         static let error = Color(red: 0.9, green: 0.2, blue: 0.2)
         
-        // Text Colors
+        // Text Colors - Adaptive
         static let textPrimary = Color.primary
         static let textSecondary = Color.secondary
-        static let textTertiary = Color(red: 0.6, green: 0.6, blue: 0.6)
+        static let textTertiary = Color(light: Color(red: 0.6, green: 0.6, blue: 0.6), dark: Color(red: 0.7, green: 0.7, blue: 0.7))
+        static let textInverse = Color(light: Color.white, dark: Color.black)
+        
+        // Background Colors - Adaptive
+        static let backgroundPrimary = Color(light: Color.white, dark: Color.black)
+        static let backgroundSecondary = Color(light: Color(red: 0.98, green: 0.98, blue: 0.98), dark: Color(red: 0.08, green: 0.08, blue: 0.08))
+        static let backgroundTertiary = Color(light: Color(red: 0.95, green: 0.95, blue: 0.97), dark: Color(red: 0.15, green: 0.15, blue: 0.17))
+        
+        // Surface Colors - Adaptive
+        static let surfaceElevated = Color(light: Color.white, dark: Color(red: 0.1, green: 0.1, blue: 0.1))
+        static let surfaceCard = Color(light: Color.white.opacity(0.9), dark: Color.black.opacity(0.8))
     }
     
     // MARK: - Typography
@@ -85,9 +127,20 @@ struct DesignSystem {
     
     // MARK: - Shadows
     struct Shadows {
-        static let light = Color.black.opacity(0.05)
-        static let medium = Color.black.opacity(0.1)
-        static let strong = Color.black.opacity(0.2)
+        static let light = Color(light: Color.black.opacity(0.08), dark: Color.white.opacity(0.04))
+        static let medium = Color(light: Color.black.opacity(0.15), dark: Color.white.opacity(0.08))
+        static let strong = Color(light: Color.black.opacity(0.25), dark: Color.white.opacity(0.12))
+        static let colored = Color(light: Color(red: 0.35, green: 0.15, blue: 0.85).opacity(0.4), dark: Color(red: 0.65, green: 0.45, blue: 0.95).opacity(0.5))
+        static let glow = Color(light: Color(red: 0.55, green: 0.35, blue: 0.95).opacity(0.6), dark: Color(red: 0.75, green: 0.55, blue: 1.0).opacity(0.7))
+    }
+    
+    // MARK: - Animations
+    struct Animations {
+        static let quick = Animation.easeInOut(duration: 0.2)
+        static let medium = Animation.spring(response: 0.3, dampingFraction: 0.7)
+        static let smooth = Animation.spring(response: 0.4, dampingFraction: 0.8)
+        static let bouncy = Animation.spring(response: 0.5, dampingFraction: 0.6)
+        static let gentle = Animation.easeOut(duration: 0.3)
     }
 }
 
@@ -103,9 +156,15 @@ struct CardStyle: ViewModifier {
                     .fill(DesignSystem.Colors.cardGradient)
                     .shadow(
                         color: DesignSystem.Shadows.medium,
-                        radius: isPressed ? 5 : 10,
+                        radius: isPressed ? 8 : 15,
                         x: 0,
-                        y: isPressed ? 2 : 5
+                        y: isPressed ? 4 : 8
+                    )
+                    .shadow(
+                        color: DesignSystem.Shadows.light,
+                        radius: isPressed ? 3 : 6,
+                        x: 0,
+                        y: isPressed ? 2 : 4
                     )
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
@@ -143,6 +202,25 @@ struct PrimaryButtonStyle: ViewModifier {
     }
 }
 
+// MARK: - Color Extensions
+extension Color {
+    init(light: Color, dark: Color) {
+        self.init(UIColor { traitCollection in
+            switch traitCollection.userInterfaceStyle {
+            case .dark:
+                return UIColor(dark)
+            default:
+                return UIColor(light)
+            }
+        })
+    }
+    
+    // Quick access to adaptive colors
+    static let adaptiveBackground = Color(light: .white, dark: .black)
+    static let adaptiveText = Color(light: .black, dark: .white)
+    static let adaptiveSecondary = Color(light: .gray, dark: Color(white: 0.7))
+}
+
 // MARK: - View Extensions
 extension View {
     func cardStyle(isPressed: Bool = false) -> some View {
@@ -151,5 +229,14 @@ extension View {
     
     func primaryButtonStyle(isPressed: Bool = false) -> some View {
         self.modifier(PrimaryButtonStyle(isPressed: isPressed))
+    }
+    
+    // Dark mode adaptive modifiers
+    func adaptiveBackground() -> some View {
+        self.background(DesignSystem.Colors.backgroundPrimary)
+    }
+    
+    func adaptiveTextColor() -> some View {
+        self.foregroundColor(DesignSystem.Colors.textPrimary)
     }
 }

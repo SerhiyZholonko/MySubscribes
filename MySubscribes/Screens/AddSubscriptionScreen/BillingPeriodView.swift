@@ -14,27 +14,35 @@ struct BillingPeriodView: View {
     let periods = ["Weekly", "Monthly", "Yearly"]
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             Text("Billing Period")
-            VStack {
+                .font(DesignSystem.Typography.headline)
+                .foregroundColor(DesignSystem.Colors.textPrimary)
+            
+            VStack(spacing: 0) {
                 Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         isExpanded.toggle()
                     }
                 }) {
                     HStack {
                         Text(selectedPeriod)
-                            .foregroundColor(.primary)
+                            .font(DesignSystem.Typography.body)
+                            .foregroundColor(DesignSystem.Colors.textPrimary)
                         Spacer()
                         Image(systemName: "chevron.down")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(DesignSystem.Colors.primary)
                             .rotationEffect(.degrees(isExpanded ? 180 : 0))
                     }
                     .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
+                            .fill(DesignSystem.Colors.surfaceElevated)
+                    )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
+                            .stroke(DesignSystem.Colors.primary.opacity(0.3), lineWidth: 1)
                     )
                 }
                 
@@ -43,40 +51,53 @@ struct BillingPeriodView: View {
                         ForEach(periods, id: \.self) { period in
                             Button(action: {
                                 selectedPeriod = period
-                                withAnimation {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                     isExpanded = false
                                 }
                             }) {
                                 HStack {
                                     Text(period)
-                                        .foregroundColor(.primary)
+                                        .font(DesignSystem.Typography.body)
+                                        .foregroundColor(DesignSystem.Colors.textPrimary)
                                     Spacer()
                                     if period == selectedPeriod {
                                         Image(systemName: "checkmark")
-                                            .foregroundColor(.blue)
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(DesignSystem.Colors.primary)
                                     }
                                 }
                                 .padding()
-                                .background(Color.white)
+                                .background(
+                                    period == selectedPeriod ? 
+                                    DesignSystem.Colors.primary.opacity(0.1) : 
+                                    Color.clear
+                                )
                             }
                             .buttonStyle(PlainButtonStyle())
                             
                             if period != periods.last {
                                 Divider()
+                                    .background(DesignSystem.Colors.textTertiary.opacity(0.3))
                             }
                         }
                     }
-                    .background(Color.white)
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray, lineWidth: 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
+                            .fill(DesignSystem.Colors.surfaceElevated)
                     )
-                    .shadow(radius: 5)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
+                            .stroke(DesignSystem.Colors.primary.opacity(0.3), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                    .padding(.top, 4)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .move(edge: .top).combined(with: .opacity)
+                    ))
                 }
             }
         }
-        .padding()
     }
 }
 

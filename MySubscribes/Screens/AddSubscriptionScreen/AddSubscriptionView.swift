@@ -315,19 +315,22 @@ struct ModalHeaderView: View {
             Spacer()
             
             // Save Button
-            Button("Save") {
+            Button {
                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                 impactFeedback.impactOccurred()
                 onSave()
+            } label: {
+                Text("Save")
             }
+
             .font(DesignSystem.Typography.body)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(DesignSystem.Colors.primary)
             .padding(.horizontal, DesignSystem.Spacing.md)
             .padding(.vertical, DesignSystem.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm)
-                    .fill(DesignSystem.Colors.primary)
+                    .fill(DesignSystem.Colors.primaryLight)
             )
             .scaleEffect(saveButtonPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: saveButtonPressed)

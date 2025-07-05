@@ -148,7 +148,7 @@ struct CalendarHeaderView: View {
                 Button(action: onPreviousMonth) {
                     Image(systemName: "chevron.left")
                         .font(.title2)
-                        .foregroundColor(DesignSystem.Colors.primary)
+                        .foregroundColor(.blue)
                         .frame(width: 44, height: 44)
                         .background(
                             Circle()
@@ -174,7 +174,7 @@ struct CalendarHeaderView: View {
                 Button(action: onNextMonth) {
                     Image(systemName: "chevron.right")
                         .font(.title2)
-                        .foregroundColor(DesignSystem.Colors.primary)
+                        .foregroundColor(.blue)
                         .frame(width: 44, height: 44)
                         .background(
                             Circle()
@@ -299,7 +299,7 @@ struct CalendarDayCell: View {
                 Text(dayNumber)
                     .font(.system(size: 16, weight: isSelected || isToday ? .bold : .medium))
                     .foregroundColor(
-                        isSelected ? .white :
+                        isSelected ? DesignSystem.Colors.textPrimary :
                         isToday ? DesignSystem.Colors.primary :
                         isCurrentMonth ? DesignSystem.Colors.textPrimary : DesignSystem.Colors.textTertiary
                     )
@@ -324,14 +324,14 @@ struct CalendarDayCell: View {
                 if !payments.isEmpty {
                     Text(String(format: "$%.0f", totalAmount))
                         .font(.system(size: 8, weight: .medium))
-                        .foregroundColor(isSelected ? .white.opacity(0.8) : DesignSystem.Colors.textSecondary)
+                        .foregroundColor(isSelected ? DesignSystem.Colors.textPrimary.opacity(0.8) : DesignSystem.Colors.textSecondary)
                 }
             }
             .frame(width: 45, height: 50)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(
-                        isSelected ? DesignSystem.Colors.primary :
+                        isSelected ? DesignSystem.Colors.primary.opacity(0.15) :
                         isToday ? DesignSystem.Colors.primary.opacity(0.1) :
                         !payments.isEmpty ? DesignSystem.Colors.accent.opacity(0.05) :
                         Color.clear
@@ -340,8 +340,10 @@ struct CalendarDayCell: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(
-                        isToday && !isSelected ? DesignSystem.Colors.primary : Color.clear,
-                        lineWidth: 2
+                        isSelected ? DesignSystem.Colors.primary :
+                        isToday && !isSelected ? DesignSystem.Colors.primary : 
+                        Color.clear,
+                        lineWidth: isSelected ? 2 : 2
                     )
             )
         }

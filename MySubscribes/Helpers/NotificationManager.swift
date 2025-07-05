@@ -25,97 +25,12 @@ class NotificationManager: ObservableObject {
         }
     }
     
-    // MARK: - Schedule Notifications
-    func scheduleSubscriptionNotification(for subscription: Subscription) {
-        requestPermission { [weak self] granted in
-            if granted {
-                self?.createNotificationRequest(for: subscription)
-            }
-        }
-    }
-    
     // MARK: - Schedule Advanced Notifications
     func scheduleAdvancedNotifications(for subscription: Subscription) {
         requestPermission { [weak self] granted in
             if granted {
                 self?.createAdvancedNotificationRequests(for: subscription)
             }
-        }
-    }
-    
-    private func createNotificationRequest(for subscription: Subscription) {
-        let content = UNMutableNotificationContent()
-        content.title = "💳 Subscription Payment Due"
-        content.body = "\(subscription.serviceName) payment of $\(String(format: "%.2f", subscription.monthlyCost)) is due today!"
-        content.sound = .default
-        content.badge = 1
-        
-        // Add custom data to identify the subscription
-        content.userInfo = [
-            "subscriptionId": subscription.persistentModelID.hashValue,
-            "serviceName": subscription.serviceName,
-            "amount": subscription.monthlyCost
-        ]
-        
-        let calendar = Calendar.current
-        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: subscription.nextPaymentDate)
-        
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-        let identifier = generateNotificationId(for: subscription)
-        
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("❌ Error scheduling notification: \(error)")
-            } else {
-                print("✅ Notification scheduled for \(subscription.serviceName) on \(subscription.nextPaymentDate)")
-            }
-        }
-        
-        // Schedule recurring notifications if applicable
-        if subscription.billingPeriod != "One-time" {
-            scheduleRecurringNotifications(for: subscription)
-        }
-    }
-    
-    private func scheduleRecurringNotifications(for subscription: Subscription) {
-        let calendar = Calendar.current
-        var currentDate = subscription.nextPaymentDate
-        
-        // Schedule up to 12 future notifications (1 year ahead)
-        for i in 1...12 {
-            guard let nextDate = getNextPaymentDate(from: currentDate, period: subscription.billingPeriod, using: calendar) else {
-                break
-            }
-            
-            let content = UNMutableNotificationContent()
-            content.title = "💳 Subscription Payment Due"
-            content.body = "\(subscription.serviceName) payment of $\(String(format: "%.2f", subscription.monthlyCost)) is due today!"
-            content.sound = .default
-            content.badge = 1
-            content.userInfo = [
-                "subscriptionId": subscription.persistentModelID.hashValue,
-                "serviceName": subscription.serviceName,
-                "amount": subscription.monthlyCost,
-                "recurringIndex": i
-            ]
-            
-            let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: nextDate)
-            let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-            let identifier = "\(generateNotificationId(for: subscription))_recurring_\(i)"
-            
-            let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-            
-            UNUserNotificationCenter.current().add(request) { error in
-                if let error = error {
-                    print("❌ Error scheduling recurring notification \(i): \(error)")
-                } else {
-                    print("✅ Recurring notification \(i) scheduled for \(subscription.serviceName) on \(nextDate)")
-                }
-            }
-            
-            currentDate = nextDate
         }
     }
     

@@ -17,11 +17,19 @@ struct ServiceNameView: View {
             TextField("e.g., Netflix, Spotify", text: $serviceNameText)
                 .frame(height: 50)
                 .padding(.horizontal)
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(.systemGray6))
+                        .shadow(
+                            color: DesignSystem.Shadows.light,
+                            radius: 6,
+                            x: 0,
+                            y: 3
+                        )
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray, lineWidth: 1)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                 )
         }
         .padding()

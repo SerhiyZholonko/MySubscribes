@@ -21,7 +21,7 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
             
             if showMainApp {
-                STabView()
+                TabViewSelector()
                     .transition(.asymmetric(
                         insertion: .move(edge: .trailing).combined(with: .opacity),
                         removal: .move(edge: .leading).combined(with: .opacity)
@@ -109,6 +109,19 @@ struct OnboardingPageView: View {
     
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.xl) {
+            // App Logo (only on first page)
+            if pageIndex == 0 {
+                VStack(spacing: 8) {
+                    AppLogo.largeWithText
+                    
+                    Text("Welcome to")
+                        .font(.caption)
+                        .foregroundColor(DesignSystem.Colors.textSecondary)
+                        .opacity(textOpacity)
+                }
+                .padding(.top, DesignSystem.Spacing.lg)
+            }
+            
             Spacer()
             
             // Animated Icon
@@ -223,6 +236,16 @@ struct OnboardingBottomControls: View {
                     .padding(.horizontal, DesignSystem.Spacing.lg)
                     .background(
                         RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
+                            .fill(DesignSystem.Colors.backgroundPrimary)
+                            .shadow(
+                                color: DesignSystem.Shadows.light,
+                                radius: 8,
+                                x: 0,
+                                y: 4
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.md)
                             .stroke(DesignSystem.Colors.primary, lineWidth: 2)
                     )
                     .transition(.move(edge: .leading).combined(with: .opacity))
@@ -266,6 +289,12 @@ struct PageIndicator: View {
         RoundedRectangle(cornerRadius: 4)
             .fill(color)
             .frame(width: isActive ? 24 : 8, height: 8)
+            .shadow(
+                color: color.opacity(0.3),
+                radius: isActive ? 4 : 2,
+                x: 0,
+                y: 2
+            )
             .animation(.easeInOut(duration: 0.3), value: isActive)
     }
 }
