@@ -159,7 +159,6 @@ import SwiftUI
 import SwiftData
 
 enum BillingDisplayPeriod: String, CaseIterable {
-    case weekly = "Weekly"
     case monthly = "Monthly"
     case yearly = "Yearly"
 }
@@ -235,22 +234,26 @@ class SubscriptionsViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Filtered subscriptions based on selected period
+    var filteredSubscriptions: [Subscription] {
+        switch selectedPeriod {
+        case .monthly:
+            return subscriptions.filter { $0.billingPeriod == "Monthly" }
+        case .yearly:
+            return subscriptions.filter { $0.billingPeriod == "Yearly" }
+        }
+    }
+    
     // MARK: - Period-based calculations
     var totalSpendingForPeriod: Double {
-        switch selectedPeriod {
-        case .weekly:
-            return calculateWeeklySpending()
-        case .monthly:
-            return calculateMonthlySpending()
-        case .yearly:
-            return calculateYearlySpending()
+        // Calculate sum only for subscriptions matching the selected period
+        return filteredSubscriptions.reduce(0) { total, subscription in
+            return total + subscription.monthlyCost
         }
     }
     
     var periodTitle: String {
         switch selectedPeriod {
-        case .weekly:
-            return "Weekly Spending"
         case .monthly:
             return "Monthly Spending"
         case .yearly:
@@ -260,8 +263,6 @@ class SubscriptionsViewModel: ObservableObject {
     
     var iconForPeriod: String {
         switch selectedPeriod {
-        case .weekly:
-            return "calendar.day.timeline.left"
         case .monthly:
             return "calendar"
         case .yearly:
@@ -269,61 +270,4 @@ class SubscriptionsViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Private calculation methods
-    private func calculateWeeklySpending() -> Double {
-        return subscriptions.reduce(0) { total, subscription in
-            let weeklyCost: Double
-            switch subscription.billingPeriod {
-            case "Weekly":
-                weeklyCost = subscription.monthlyCost
-            case "Monthly":
-                weeklyCost = subscription.monthlyCost / 4.33 // Average weeks per month
-            case "Quarterly":
-                weeklyCost = subscription.monthlyCost / 13 // Quarterly = ~13 weeks
-            case "Yearly":
-                weeklyCost = subscription.monthlyCost / 52
-            default:
-                weeklyCost = subscription.monthlyCost / 4.33
-            }
-            return total + weeklyCost
-        }
-    }
-    
-    private func calculateMonthlySpending() -> Double {
-        return subscriptions.reduce(0) { total, subscription in
-            let monthlyCost: Double
-            switch subscription.billingPeriod {
-            case "Weekly":
-                monthlyCost = subscription.monthlyCost * 4.33
-            case "Monthly":
-                monthlyCost = subscription.monthlyCost
-            case "Quarterly":
-                monthlyCost = subscription.monthlyCost / 3
-            case "Yearly":
-                monthlyCost = subscription.monthlyCost / 12
-            default:
-                monthlyCost = subscription.monthlyCost
-            }
-            return total + monthlyCost
-        }
-    }
-    
-    private func calculateYearlySpending() -> Double {
-        return subscriptions.reduce(0) { total, subscription in
-            let yearlyCost: Double
-            switch subscription.billingPeriod {
-            case "Weekly":
-                yearlyCost = subscription.monthlyCost * 52
-            case "Monthly":
-                yearlyCost = subscription.monthlyCost * 12
-            case "Quarterly":
-                yearlyCost = subscription.monthlyCost * 4
-            case "Yearly":
-                yearlyCost = subscription.monthlyCost
-            default:
-                yearlyCost = subscription.monthlyCost * 12
-            }
-            return total + yearlyCost
-        }
-    }
 }

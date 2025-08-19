@@ -53,11 +53,11 @@ struct AnalyticsStatsCardsView: View {
     }
     
     private var activeSubscriptions: [Subscription] {
-        subscriptions.filter { $0.isActive }
+        filteredSubscriptions(for: selectedPeriod).filter { $0.isActive }
     }
     
     private var uniqueCategories: Set<String> {
-        Set(subscriptions.map { $0.category })
+        Set(filteredSubscriptions(for: selectedPeriod).map { $0.category })
     }
     
     var body: some View {
@@ -76,39 +76,27 @@ struct AnalyticsStatsCardsView: View {
         }
     }
     
+    // Filter subscriptions based on selected period
+    private func filteredSubscriptions(for period: AnalyticsPeriod) -> [Subscription] {
+        switch period {
+        case .monthly:
+            return subscriptions.filter { $0.billingPeriod == "Monthly" }
+        case .yearly:
+            return subscriptions.filter { $0.billingPeriod == "Yearly" }
+        }
+    }
+    
     private func totalSpending(for period: AnalyticsPeriod) -> Double {
-        subscriptions.reduce(0) { total, subscription in
-            total + calculateCostForPeriod(subscription: subscription, period: period)
+        let filtered = filteredSubscriptions(for: period)
+        return filtered.reduce(0) { total, subscription in
+            total + subscription.monthlyCost
         }
     }
     
     private func averagePerService(for period: AnalyticsPeriod) -> Double {
+        let filtered = filteredSubscriptions(for: period)
         let total = totalSpending(for: period)
-        return subscriptions.isEmpty ? 0 : total / Double(subscriptions.count)
-    }
-    
-    private func calculateCostForPeriod(subscription: Subscription, period: AnalyticsPeriod) -> Double {
-        // Normalize to monthly cost first
-        let monthlyCost: Double
-        
-        switch subscription.billingPeriod.lowercased() {
-        case "weekly":
-            monthlyCost = subscription.monthlyCost * 4.33
-        case "yearly", "annual":
-            monthlyCost = subscription.monthlyCost / 12
-        default:
-            monthlyCost = subscription.monthlyCost
-        }
-        
-        // Convert to requested period
-        switch period {
-        case .weekly:
-            return monthlyCost / 4.33
-        case .monthly:
-            return monthlyCost
-        case .yearly:
-            return monthlyCost * 12
-        }
+        return filtered.isEmpty ? 0 : total / Double(filtered.count)
     }
 }
 
@@ -202,13 +190,23 @@ struct EnhancedSpendingChartView: View {
     @State private var selectedChartType: ChartType = .pie
     
     private var chartData: [ChartDataPoint] {
-        subscriptions.map { subscription in
+        filteredSubscriptions(for: selectedPeriod).map { subscription in
             ChartDataPoint(
                 serviceName: subscription.serviceName,
-                cost: calculateCostForPeriod(subscription: subscription, period: selectedPeriod)
+                cost: subscription.monthlyCost
             )
         }
         .sorted { $0.cost > $1.cost }
+    }
+    
+    // Filter subscriptions based on selected period
+    private func filteredSubscriptions(for period: AnalyticsPeriod) -> [Subscription] {
+        switch period {
+        case .monthly:
+            return subscriptions.filter { $0.billingPeriod == "Monthly" }
+        case .yearly:
+            return subscriptions.filter { $0.billingPeriod == "Yearly" }
+        }
     }
     
     private var totalCost: Double {
@@ -240,7 +238,8 @@ struct EnhancedSpendingChartView: View {
                 .frame(width: 120)
             }
             
-            if !subscriptions.isEmpty {
+            let filteredSubs = filteredSubscriptions(for: selectedPeriod)
+            if !filteredSubs.isEmpty {
                 // Chart
                 Group {
                     switch selectedChartType {
@@ -278,27 +277,6 @@ struct EnhancedSpendingChartView: View {
         }
     }
     
-    private func calculateCostForPeriod(subscription: Subscription, period: AnalyticsPeriod) -> Double {
-        let monthlyCost: Double
-        
-        switch subscription.billingPeriod.lowercased() {
-        case "weekly":
-            monthlyCost = subscription.monthlyCost * 4.33
-        case "yearly", "annual":
-            monthlyCost = subscription.monthlyCost / 12
-        default:
-            monthlyCost = subscription.monthlyCost
-        }
-        
-        switch period {
-        case .weekly:
-            return monthlyCost / 4.33
-        case .monthly:
-            return monthlyCost
-        case .yearly:
-            return monthlyCost * 12
-        }
-    }
 }
 
 // MARK: - Chart Type Enum

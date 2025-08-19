@@ -61,7 +61,6 @@ struct ChartDataPoint {
 
 // MARK: - Period Options
 enum ChartPeriod: String, CaseIterable, Identifiable, Equatable {
-    case weekly = "Weekly"
     case monthly = "Monthly"
     case yearly = "Yearly"
     
@@ -105,42 +104,25 @@ struct SpendingBreakdownView: View {
     @Query private var subscriptions: [Subscription]
     @State private var selectedPeriod: ChartPeriod = .monthly
     
-    // Function to calculate cost based on selected period
+    // Function to calculate cost based on selected period - now just returns the cost directly
     private func calculateCostForPeriod(subscription: Subscription, period: ChartPeriod) -> Double {
-        // Normalize to monthly cost first
-        let monthlyCost: Double
-        
-        switch subscription.billingPeriod.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) {
-        case "weekly":
-            monthlyCost = subscription.monthlyCost * 4.33
-        case "monthly":
-            monthlyCost = subscription.monthlyCost
-        case "yearly", "annual":
-            monthlyCost = subscription.monthlyCost / 12
-        default:
-            monthlyCost = subscription.monthlyCost
-        }
-        
-        // Convert to requested period
-        switch period {
-        case .weekly:
-            return monthlyCost / 4.33
-        case .monthly:
-            return monthlyCost
-        case .yearly:
-            return monthlyCost * 12
-        }
+        return subscription.monthlyCost
     }
     
     private var chartData: [ChartDataPoint] {
-        subscriptions
-            .filter { subscription in
-                subscription.billingPeriod.lowercased().contains(selectedPeriod.rawValue.lowercased())
+        // Filter subscriptions based on selected period
+        let filtered = subscriptions.filter { subscription in
+            switch selectedPeriod {
+            case .monthly:
+                return subscription.billingPeriod == "Monthly"
+            case .yearly:
+                return subscription.billingPeriod == "Yearly"
             }
-            .map { subscription in
-                let cost = calculateCostForPeriod(subscription: subscription, period: selectedPeriod)
-                return ChartDataPoint(serviceName: subscription.serviceName, cost: cost)
-            }
+        }
+        
+        return filtered.map { subscription in
+            ChartDataPoint(serviceName: subscription.serviceName, cost: subscription.monthlyCost)
+        }
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {

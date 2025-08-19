@@ -47,11 +47,16 @@ struct MySubscriptionsView: View {
                 // Content
                 ScrollView {
                     LazyVStack(spacing: DesignSystem.Spacing.md) {
-                        if viewModel.subscriptions.isEmpty {
-                            EmptyStateView()
-                                .opacity(contentOpacity)
+                        if viewModel.filteredSubscriptions.isEmpty {
+                            if viewModel.subscriptions.isEmpty {
+                                EmptyStateView()
+                                    .opacity(contentOpacity)
+                            } else {
+                                EmptyPeriodStateView(period: viewModel.selectedPeriod.rawValue)
+                                    .opacity(contentOpacity)
+                            }
                         } else {
-                            ForEach(Array(viewModel.subscriptions.enumerated()), id: \.element.id) { index, subscription in
+                            ForEach(Array(viewModel.filteredSubscriptions.enumerated()), id: \.element.id) { index, subscription in
                                 SubscriptionCell(
                                     subscription: subscription,
                                     onDelete: {
@@ -116,6 +121,52 @@ struct MySubscriptionsView: View {
                 EditSubscriptionView(subscription: subscription)
             }
         }
+    }
+}
+
+// MARK: - Empty Period State View
+struct EmptyPeriodStateView: View {
+    let period: String
+    @State private var pulseAnimation = false
+    
+    var body: some View {
+        VStack(spacing: DesignSystem.Spacing.lg) {
+            // Animated icon
+            ZStack {
+                Circle()
+                    .fill(DesignSystem.Colors.primary.opacity(0.1))
+                    .frame(width: 100, height: 100)
+                    .scaleEffect(pulseAnimation ? 1.05 : 1.0)
+                    .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: pulseAnimation)
+                
+                Image(systemName: "calendar.badge.exclamationmark")
+                    .font(.system(size: 40))
+                    .foregroundStyle(DesignSystem.Colors.primary)
+            }
+            .onAppear {
+                pulseAnimation = true
+            }
+            
+            VStack(spacing: DesignSystem.Spacing.sm) {
+                Text("No \(period) Subscriptions")
+                    .font(DesignSystem.Typography.title2)
+                    .foregroundColor(DesignSystem.Colors.textPrimary)
+                
+                Text("You don't have any subscriptions with \(period.lowercased()) billing period")
+                    .font(DesignSystem.Typography.body)
+                    .foregroundColor(DesignSystem.Colors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, DesignSystem.Spacing.lg)
+                
+                Text("Try selecting a different period or add a new subscription")
+                    .font(.caption)
+                    .foregroundColor(DesignSystem.Colors.textTertiary)
+                    .italic()
+                    .multilineTextAlignment(.center)
+                    .padding(.top, DesignSystem.Spacing.sm)
+            }
+        }
+        .padding(.vertical, DesignSystem.Spacing.xl)
     }
 }
 

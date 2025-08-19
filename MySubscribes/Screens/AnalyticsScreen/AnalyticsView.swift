@@ -77,7 +77,6 @@ struct AnalyticsView: View {
 
 // MARK: - Analytics Period Enum
 enum AnalyticsPeriod: String, CaseIterable, Identifiable {
-    case weekly = "Weekly"
     case monthly = "Monthly"
     case yearly = "Yearly"
     
@@ -85,9 +84,8 @@ enum AnalyticsPeriod: String, CaseIterable, Identifiable {
     
     var icon: String {
         switch self {
-        case .weekly: return "calendar.day.timeline.left"
         case .monthly: return "calendar"
-        case .yearly: return "calendar.year"
+        case .yearly: return "calendar.badge.clock"
         }
     }
 }

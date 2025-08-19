@@ -241,8 +241,6 @@ struct SpendingTrendsView: View {
         return (0..<6).compactMap { offset in
             let date: Date
             switch period {
-            case .weekly:
-                date = calendar.date(byAdding: .weekOfYear, value: -offset, to: now) ?? now
             case .monthly:
                 date = calendar.date(byAdding: .month, value: -offset, to: now) ?? now
             case .yearly:
@@ -259,7 +257,6 @@ struct SpendingTrendsView: View {
 
 // MARK: - Trend Period
 enum TrendPeriod: String, CaseIterable, Identifiable {
-    case weekly = "Weekly"
     case monthly = "Monthly"
     case yearly = "Yearly"
     
