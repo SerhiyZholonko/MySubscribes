@@ -7,6 +7,15 @@
 
 import SwiftUI
 
+// MARK: - Instant Button Style
+struct InstantButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Billing Period View
 struct BillingPeriodView: View {
     @Binding var selectedPeriod: String
@@ -20,10 +29,13 @@ struct BillingPeriodView: View {
                 .foregroundColor(DesignSystem.Colors.textPrimary)
             
             VStack(spacing: 0) {
+                // Main dropdown trigger - Simple Button
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        isExpanded.toggle()
-                    }
+                    isExpanded.toggle()
+                    
+                    // Haptic feedback
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                    impactFeedback.impactOccurred()
                 }) {
                     HStack {
                         Text(selectedPeriod)
@@ -45,15 +57,18 @@ struct BillingPeriodView: View {
                             .stroke(DesignSystem.Colors.primary.opacity(0.3), lineWidth: 1)
                     )
                 }
+                .buttonStyle(InstantButtonStyle())
                 
                 if isExpanded {
                     VStack(spacing: 0) {
                         ForEach(periods, id: \.self) { period in
                             Button(action: {
                                 selectedPeriod = period
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    isExpanded = false
-                                }
+                                isExpanded = false
+                                
+                                // Haptic feedback
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                impactFeedback.impactOccurred()
                             }) {
                                 HStack {
                                     Text(period)
@@ -66,14 +81,15 @@ struct BillingPeriodView: View {
                                             .foregroundColor(DesignSystem.Colors.primary)
                                     }
                                 }
-                                .padding()
+                                .padding(.vertical, 16)
+                                .padding(.horizontal, 16)
                                 .background(
                                     period == selectedPeriod ? 
                                     DesignSystem.Colors.primary.opacity(0.1) : 
                                     Color.clear
                                 )
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(InstantButtonStyle())
                             
                             if period != periods.last {
                                 Divider()
@@ -91,10 +107,6 @@ struct BillingPeriodView: View {
                     )
                     .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                     .padding(.top, 4)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .top).combined(with: .opacity),
-                        removal: .move(edge: .top).combined(with: .opacity)
-                    ))
                 }
             }
         }

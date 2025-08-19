@@ -44,8 +44,6 @@ struct CustomTabView: View {
                         }
                         .opacity(selectedTab == index ? 1 : 0)
                         .scaleEffect(selectedTab == index ? 1 : 0.96)
-                        .rotationEffect(.degrees(selectedTab == index ? 0 : Double(index - selectedTab) * 2))
-                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: selectedTab)
                     }
                 }
                 
@@ -157,15 +155,10 @@ struct WaveTabBar: View {
                         scale: buttonScales[index],
                         namespace: namespace,
                         action: {
-                            // Ripple effect
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                buttonScales[index] = 1.3
-                                selectedTab = index
-                            }
-                            
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7).delay(0.1)) {
-                                buttonScales[index] = 1.0
-                            }
+                            // Ripple effect (no animation)
+                            buttonScales[index] = 1.3
+                            selectedTab = index
+                            buttonScales[index] = 1.0
                             
                             // Haptic feedback
                             let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -231,10 +224,8 @@ struct WaveTabButton: View {
         Button(action: {
             action()
             
-            // Rotation effect
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                rotationAngle += 360
-            }
+            // Rotation effect (no animation)
+            rotationAngle += 360
         }) {
             VStack(spacing: 8) {
                 // Icon without circle background - Simple adaptive colors
@@ -242,7 +233,6 @@ struct WaveTabButton: View {
                     .font(.system(size: 22, weight: .medium))
                     .foregroundColor(isSelected ? .blue : .secondary)
                     .scaleEffect(scale)
-                    .rotationEffect(.degrees(rotationAngle))
                     .shadow(color: isSelected ? .primary.opacity(0.2) : Color.clear, radius: 2, x: 1, y: 1)
                     .frame(width: 50, height: 50)
                 
@@ -255,7 +245,6 @@ struct WaveTabButton: View {
             }
             .frame(maxWidth: .infinity)
             .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(.easeOut(duration: 0.1), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
         .simultaneousGesture(
@@ -306,7 +295,6 @@ struct SketchTabView: View {
                             }
                         }
                         .opacity(selectedTab == index ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.3), value: selectedTab)
                     }
                 }
                 
@@ -437,9 +425,7 @@ struct SketchTabButton: View {
         .buttonStyle(PlainButtonStyle())
         .onAppear {
             if isSelected {
-                withAnimation(.easeInOut(duration: 0.1).repeatForever(autoreverses: true)) {
-                    wiggle = CGFloat.random(in: -0.5...0.5)
-                }
+                wiggle = CGFloat.random(in: -0.5...0.5)
             }
         }
     }

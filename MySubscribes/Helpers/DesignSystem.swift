@@ -81,6 +81,28 @@ struct DesignSystem {
         static let warning = Color(red: 1.0, green: 0.6, blue: 0.0)
         static let error = Color(red: 0.9, green: 0.2, blue: 0.2)
         
+        // Billing Period Colors
+        static let weeklyColor = Color(red: 0.2, green: 0.8, blue: 0.2)     // Bright Green
+        static let monthlyColor = Color(red: 0.0, green: 0.5, blue: 1.0)    // Blue  
+        static let quarterlyColor = Color(red: 1.0, green: 0.6, blue: 0.0)  // Orange
+        static let yearlyColor = Color(red: 0.8, green: 0.2, blue: 0.8)     // Purple
+        
+        // Helper function to get color by billing period
+        static func colorForBillingPeriod(_ period: String) -> Color {
+            switch period {
+            case "Weekly":
+                return weeklyColor
+            case "Monthly":
+                return monthlyColor
+            case "Quarterly":
+                return quarterlyColor
+            case "Yearly":
+                return yearlyColor
+            default:
+                return monthlyColor
+            }
+        }
+        
         // Text Colors - Adaptive
         static let textPrimary = Color.primary
         static let textSecondary = Color.secondary

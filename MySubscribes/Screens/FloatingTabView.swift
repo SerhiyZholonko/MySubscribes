@@ -47,33 +47,26 @@ struct FloatingTabView: View {
                             .onChanged { value in
                                 dragOffset = value.translation.width
                                 
-                                // Hide tab bar when scrolling with smooth animation
+                                // Hide tab bar when scrolling (no animation)
                                 let verticalDrag = abs(value.translation.height)
-                                withAnimation(DesignSystem.Animations.gentle) {
-                                    tabBarOpacity = max(0.3, 1.0 - verticalDrag / 200.0)
-                                    tabBarScale = max(0.9, 1.0 - verticalDrag / 500.0)
-                                    floatingOffset = min(20, verticalDrag / 10)
-                                }
+                                tabBarOpacity = max(0.3, 1.0 - verticalDrag / 200.0)
+                                tabBarScale = max(0.9, 1.0 - verticalDrag / 500.0)
+                                floatingOffset = min(20, verticalDrag / 10)
                             }
                             .onEnded { value in
                                 let threshold: CGFloat = 50
                                 
-                                withAnimation(DesignSystem.Animations.smooth) {
-                                    dragOffset = 0
-                                    tabBarOpacity = 1.0
-                                    tabBarScale = 1.0
-                                    floatingOffset = 0
-                                }
+                                // Reset drag state (no animation)
+                                dragOffset = 0
+                                tabBarOpacity = 1.0
+                                tabBarScale = 1.0
+                                floatingOffset = 0
                                 
-                                // Swipe to change tabs with momentum
+                                // Swipe to change tabs (no animation)
                                 if value.translation.width > threshold && selectedTab > 0 {
-                                    withAnimation(DesignSystem.Animations.bouncy) {
-                                        selectedTab -= 1
-                                    }
+                                    selectedTab -= 1
                                 } else if value.translation.width < -threshold && selectedTab < tabs.count - 1 {
-                                    withAnimation(DesignSystem.Animations.bouncy) {
-                                        selectedTab += 1
-                                    }
+                                    selectedTab += 1
                                 }
                             }
                     )
@@ -176,7 +169,6 @@ struct TabContent: View {
                     .offset(x: dragOffset * 0.7)
             }
             .offset(x: CGFloat(-selectedTab) * UIScreen.main.bounds.width + dragOffset)
-            .animation(DesignSystem.Animations.smooth, value: selectedTab)
         }
     }
 }
@@ -206,9 +198,7 @@ struct FloatingTabBar: View {
                             rippleEffect[index] = false
                         }
                         
-                        withAnimation(DesignSystem.Animations.bouncy) {
-                            selectedTab = index
-                        }
+                        selectedTab = index
                         
                         // Premium haptic feedback
                         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -217,9 +207,7 @@ struct FloatingTabBar: View {
                     }
                 )
                 .onHover { hovering in
-                    withAnimation(DesignSystem.Animations.quick) {
-                        hoveredTab = hovering ? index : nil
-                    }
+                    hoveredTab = hovering ? index : nil
                 }
                 
                 if index < tabs.count - 1 {
@@ -288,7 +276,6 @@ struct FloatingTabBar: View {
                                 )
                         }
                         .position(x: xOffset, y: geometry.size.height / 2)
-                        .animation(DesignSystem.Animations.smooth, value: selectedTab)
                     }
                 }
             }
@@ -337,14 +324,10 @@ struct FloatingTabButton: View {
         Button(action: {
             action()
             
-            // Animate icon with rotation and scale
-            withAnimation(DesignSystem.Animations.bouncy) {
-                iconRotation += 360
-                iconScale = 1.3
-            }
-            withAnimation(DesignSystem.Animations.medium.delay(0.1)) {
-                iconScale = 1.0
-            }
+            // Animate icon (no animation)
+            iconRotation += 360
+            iconScale = 1.3
+            iconScale = 1.0
         }) {
             ZStack {
                 // Ripple effect
@@ -353,7 +336,6 @@ struct FloatingTabButton: View {
                         .stroke(DesignSystem.Colors.primary, lineWidth: 2)
                         .scaleEffect(showRipple ? 2 : 0)
                         .opacity(showRipple ? 0 : 1)
-                        .animation(.easeOut(duration: 0.6), value: showRipple)
                 }
                 
                 VStack(spacing: 6) {
@@ -383,9 +365,6 @@ struct FloatingTabButton: View {
                                     endPoint: .bottom
                                 )
                             )
-                            .rotationEffect(.degrees(isSelected ? iconRotation : 0))
-                            .scaleEffect(isPressed ? 0.85 : iconScale)
-                            .animation(DesignSystem.Animations.quick, value: isPressed)
                     }
                     .frame(width: 40, height: 40)
                     

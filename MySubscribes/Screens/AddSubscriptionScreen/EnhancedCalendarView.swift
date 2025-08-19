@@ -249,11 +249,15 @@ struct CalendarDayView: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.9 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0) {
-            isPressed = true
-        } onPressingChanged: { pressing in
-            isPressed = pressing
-        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                }
+        )
     }
 }
 

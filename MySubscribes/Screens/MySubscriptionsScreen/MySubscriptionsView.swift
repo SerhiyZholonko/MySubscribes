@@ -17,6 +17,8 @@ struct MySubscriptionsView: View {
     @Query private var subscriptions: [Subscription]
     @State private var headerOffset: CGFloat = -50
     @State private var contentOpacity: Double = 0
+    @State private var showingEditSubscription = false
+    @State private var subscriptionToEdit: Subscription?
     
     var body: some View {
         ZStack {
@@ -56,6 +58,17 @@ struct MySubscriptionsView: View {
                                         withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                                             viewModel.confirmDelete(subscription)
                                         }
+                                    },
+                                    onMarkPaid: {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            viewModel.markPaymentAsPaid(subscription)
+                                        }
+                                    },
+                                    onEdit: {
+                                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                        impactFeedback.impactOccurred()
+                                        subscriptionToEdit = subscription
+                                        showingEditSubscription = true
                                     }
                                 )
                                 .transition(.asymmetric(
@@ -97,6 +110,11 @@ struct MySubscriptionsView: View {
             }
         } message: {
             Text("Are you sure you want to delete this subscription?")
+        }
+        .sheet(isPresented: $showingEditSubscription) {
+            if let subscription = subscriptionToEdit {
+                EditSubscriptionView(subscription: subscription)
+            }
         }
     }
 }

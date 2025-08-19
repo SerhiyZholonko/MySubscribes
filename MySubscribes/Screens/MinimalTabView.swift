@@ -43,7 +43,6 @@ struct MinimalTabView: View {
                             }
                         }
                         .opacity(selectedTab == index ? 1 : 0)
-                        .animation(.easeOut(duration: 0.2), value: selectedTab)
                     }
                 }
                 
@@ -85,9 +84,7 @@ struct MinimalTabBar: View {
                         isSelected: selectedTab == index,
                         namespace: namespace,
                         action: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                selectedTab = index
-                            }
+                            selectedTab = index
                             
                             let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                             impactFeedback.impactOccurred()
@@ -104,10 +101,8 @@ struct MinimalTabBar: View {
                                 }
                                 .onChange(of: selectedTab) { _, newValue in
                                     if newValue == index {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                            underlineOffset = geometry.frame(in: .named("tabBar")).minX
-                                            underlineWidth = geometry.size.width
-                                        }
+                                        underlineOffset = geometry.frame(in: .named("tabBar")).minX
+                                        underlineWidth = geometry.size.width
                                     }
                                 }
                         }
@@ -122,7 +117,6 @@ struct MinimalTabBar: View {
                     .fill(DesignSystem.Colors.primary)
                     .frame(width: underlineWidth, height: 3)
                     .offset(x: underlineOffset + underlineWidth / 2 - UIScreen.main.bounds.width / 2)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: underlineOffset)
                 , alignment: .bottom
             )
         }
@@ -177,7 +171,6 @@ struct MinimalTabButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(.easeOut(duration: 0.1), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
         .simultaneousGesture(
@@ -234,7 +227,6 @@ struct LineTabView: View {
                             }
                         }
                         .opacity(selectedTab == index ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.3), value: selectedTab)
                     }
                 }
                 
@@ -267,9 +259,7 @@ struct LineTabBar: View {
                         isSelected: selectedTab == index,
                         namespace: namespace,
                         action: {
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                selectedTab = index
-                            }
+                            selectedTab = index
                             
                             let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                             impactFeedback.impactOccurred()
@@ -329,7 +319,6 @@ struct LineTabButton: View {
                 }
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(.easeOut(duration: 0.1), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
         .simultaneousGesture(
@@ -378,7 +367,6 @@ struct BorderTabView: View {
                             }
                         }
                         .opacity(selectedTab == index ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.25), value: selectedTab)
                     }
                 }
                 
@@ -410,9 +398,7 @@ struct BorderTabBar: View {
                     isSelected: selectedTab == index,
                     namespace: namespace,
                     action: {
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                            selectedTab = index
-                        }
+                        selectedTab = index
                         
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
@@ -460,7 +446,6 @@ struct BorderTabButton: View {
                 }
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(.easeOut(duration: 0.1), value: isPressed)
         }
         .buttonStyle(PlainButtonStyle())
         .simultaneousGesture(

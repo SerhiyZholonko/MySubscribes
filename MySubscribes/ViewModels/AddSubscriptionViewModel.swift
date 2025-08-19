@@ -19,6 +19,8 @@ class AddSubscriptionViewModel {
     var isRecurring = true
     var endDate: Date? = nil
     var reminderDays = 1
+    var renewalReminderEnabled = true
+    var renewalReminderDays = 7
     var selectedCategory = "General"
     var notes = ""
     var selectedColor = "blue"
@@ -27,6 +29,12 @@ class AddSubscriptionViewModel {
     var shouldDismiss = false
     
     private var modelContext: ModelContext?
+    
+    init() {
+        // Initialize with normalized date to avoid timezone issues
+        let calendar = Calendar.current
+        nextPaymentDate = calendar.startOfDay(for: Date())
+    }
     
     let categories = ["General", "Entertainment", "Software", "Health", "Education", "Shopping", "Utilities", "Gaming"]
     let colors = ["blue", "purple", "red", "green", "orange"]
@@ -37,8 +45,33 @@ class AddSubscriptionViewModel {
         (14, "2 weeks before")
     ]
     
+    let renewalReminderOptions = [
+        (3, "3 days before"),
+        (7, "1 week before"),
+        (14, "2 weeks before"),
+        (30, "1 month before")
+    ]
+    
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+    
+    // Normalize date to start of day to avoid timezone issues
+    private func normalizeDate(_ date: Date) -> Date {
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: date)
+    }
+    
+    // Get corrected next payment date based on selected period
+    private func getCorrectedPaymentDate() -> Date {
+        let normalizedDate = normalizeDate(nextPaymentDate)
+        
+        // For weekly subscriptions, ensure we don't accidentally add extra days
+        if selectedPeriod == "Weekly" {
+            return normalizedDate
+        }
+        
+        return normalizedDate
     }
     
     func saveSubscription() {
@@ -53,10 +86,12 @@ class AddSubscriptionViewModel {
             serviceName: serviceNameText.trimmingCharacters(in: .whitespacesAndNewlines),
             monthlyCost: cost,
             billingPeriod: selectedPeriod,
-            nextPaymentDate: nextPaymentDate,
+            nextPaymentDate: getCorrectedPaymentDate(),
             isRecurring: isRecurring,
-            endDate: isRecurring ? endDate : nil,
+            endDate: isRecurring ? (endDate != nil ? normalizeDate(endDate!) : nil) : nil,
             reminderDays: reminderDays,
+            renewalReminderEnabled: renewalReminderEnabled,
+            renewalReminderDays: renewalReminderDays,
             category: selectedCategory,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
             color: selectedColor
@@ -108,10 +143,12 @@ class AddSubscriptionViewModel {
         serviceNameText = ""
         monthlyCostText = "0.00"
         selectedPeriod = "Monthly"
-        nextPaymentDate = Date()
+        nextPaymentDate = normalizeDate(Date())
         isRecurring = true
         endDate = nil
         reminderDays = 1
+        renewalReminderEnabled = true
+        renewalReminderDays = 7
         selectedCategory = "General"
         notes = ""
         selectedColor = "blue"

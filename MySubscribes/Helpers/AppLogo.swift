@@ -29,10 +29,12 @@ struct AppLogo: View {
     }
     
     private var logoIcon: some View {
-        Image("AppLogo")
+        Image("AppIcon")
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: size * 0.2))
+            .shadow(color: .black.opacity(0.2), radius: size * 0.1, x: 0, y: size * 0.05)
     }
     
     private var logoText: some View {

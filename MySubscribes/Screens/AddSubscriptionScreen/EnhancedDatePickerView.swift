@@ -172,7 +172,8 @@ struct QuickDateOptionsView: View {
                             days: option.1,
                             action: {
                                 let calendar = Calendar.current
-                                if let newDate = calendar.date(byAdding: .day, value: option.1, to: Date()) {
+                                let startOfToday = calendar.startOfDay(for: Date())
+                                if let newDate = calendar.date(byAdding: .day, value: option.1, to: startOfToday) {
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                         nextPaymentDate = newDate
                                     }
@@ -225,11 +226,15 @@ struct QuickDateButton: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0) {
-            isPressed = true
-        } onPressingChanged: { pressing in
-            isPressed = pressing
-        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                }
+        )
     }
 }
 

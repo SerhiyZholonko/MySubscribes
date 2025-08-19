@@ -35,15 +35,18 @@ class NotificationManager: ObservableObject {
     }
     
     private func getNextPaymentDate(from date: Date, period: String, using calendar: Calendar) -> Date? {
+        // Normalize input date to start of day to avoid timezone issues
+        let normalizedDate = calendar.startOfDay(for: date)
+        
         switch period {
         case "Weekly":
-            return calendar.date(byAdding: .weekOfYear, value: 1, to: date)
+            return calendar.date(byAdding: .weekOfYear, value: 1, to: normalizedDate)
         case "Monthly":
-            return calendar.date(byAdding: .month, value: 1, to: date)
+            return calendar.date(byAdding: .month, value: 1, to: normalizedDate)
         case "Quarterly":
-            return calendar.date(byAdding: .month, value: 3, to: date)
+            return calendar.date(byAdding: .month, value: 3, to: normalizedDate)
         case "Yearly":
-            return calendar.date(byAdding: .year, value: 1, to: date)
+            return calendar.date(byAdding: .year, value: 1, to: normalizedDate)
         default:
             return nil
         }
@@ -54,18 +57,24 @@ class NotificationManager: ObservableObject {
         let center = UNUserNotificationCenter.current()
         let baseIdentifier = generateNotificationId(for: subscription)
         
-        // Cancel the main notification
-        center.removePendingNotificationRequests(withIdentifiers: [baseIdentifier])
-        
-        // Cancel recurring notifications
         var identifiersToCancel: [String] = []
-        for i in 1...12 {
-            identifiersToCancel.append("\(baseIdentifier)_recurring_\(i)")
+        
+        // Cancel main notifications
+        identifiersToCancel.append(baseIdentifier)
+        identifiersToCancel.append("\(baseIdentifier)_reminder")
+        identifiersToCancel.append("\(baseIdentifier)_renewal")
+        identifiersToCancel.append("\(baseIdentifier)_expired")
+        
+        // Cancel recurring notifications (up to max possible based on billing period)
+        let maxNotifications = calculateMaxNotifications(for: subscription.billingPeriod)
+        for i in 1...maxNotifications {
+            identifiersToCancel.append("\(baseIdentifier)_reminder_\(i)")
+            identifiersToCancel.append("\(baseIdentifier)_payment_\(i)")
         }
         
         center.removePendingNotificationRequests(withIdentifiers: identifiersToCancel)
         
-        print("🗑️ Cancelled notifications for \(subscription.serviceName)")
+        print("🗑️ Cancelled all notifications for \(subscription.serviceName) (including renewals and recurring)")
     }
     
     // MARK: - Advanced Notification Creation
@@ -86,11 +95,13 @@ class NotificationManager: ObservableObject {
     }
     
     private func scheduleReminderNotification(for subscription: Subscription) {
-        let reminderDate = Calendar.current.date(
+        let calendar = Calendar.current
+        let normalizedPaymentDate = calendar.startOfDay(for: subscription.nextPaymentDate)
+        let reminderDate = calendar.date(
             byAdding: .day,
             value: -subscription.reminderDays,
-            to: subscription.nextPaymentDate
-        ) ?? subscription.nextPaymentDate
+            to: normalizedPaymentDate
+        ) ?? normalizedPaymentDate
         
         // Don't schedule reminder if it's in the past
         guard reminderDate > Date() else { return }
@@ -107,7 +118,6 @@ class NotificationManager: ObservableObject {
             "type": "reminder"
         ]
         
-        let calendar = Calendar.current
         let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: reminderDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let identifier = "\(generateNotificationId(for: subscription))_reminder"
@@ -139,7 +149,8 @@ class NotificationManager: ObservableObject {
         ]
         
         let calendar = Calendar.current
-        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: subscription.nextPaymentDate)
+        let normalizedPaymentDate = calendar.startOfDay(for: subscription.nextPaymentDate)
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: normalizedPaymentDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
         let identifier = generateNotificationId(for: subscription)
         
@@ -156,11 +167,14 @@ class NotificationManager: ObservableObject {
     
     private func scheduleRecurringAdvancedNotifications(for subscription: Subscription) {
         let calendar = Calendar.current
-        var currentDate = subscription.nextPaymentDate
+        var currentDate = calendar.startOfDay(for: subscription.nextPaymentDate)
         let endDate = subscription.endDate
         
-        // Schedule up to 12 future notifications or until end date
-        for i in 1...12 {
+        // Calculate how many notifications to schedule based on billing period
+        let maxNotifications = calculateMaxNotifications(for: subscription.billingPeriod)
+        
+        // Schedule recurring payment notifications
+        for i in 1...maxNotifications {
             guard let nextDate = getNextPaymentDate(from: currentDate, period: subscription.billingPeriod, using: calendar) else {
                 break
             }
@@ -170,7 +184,7 @@ class NotificationManager: ObservableObject {
                 break
             }
             
-            // Schedule reminder
+            // Schedule reminder notification
             let reminderDate = calendar.date(byAdding: .day, value: -subscription.reminderDays, to: nextDate)
             if let reminderDate = reminderDate, reminderDate > Date() {
                 scheduleRecurringReminder(for: subscription, date: reminderDate, index: i)
@@ -180,6 +194,27 @@ class NotificationManager: ObservableObject {
             scheduleRecurringPayment(for: subscription, date: nextDate, index: i)
             
             currentDate = nextDate
+        }
+        
+        // Schedule renewal reminder if enabled and has end date
+        if subscription.renewalReminderEnabled, let endDate = endDate {
+            scheduleRenewalReminder(for: subscription, endDate: endDate)
+        }
+    }
+    
+    // Calculate optimal number of notifications based on billing period to cover ~1 year
+    private func calculateMaxNotifications(for billingPeriod: String) -> Int {
+        switch billingPeriod {
+        case "Weekly":
+            return 52 // 1 year of weekly notifications
+        case "Monthly":
+            return 12 // 1 year of monthly notifications
+        case "Quarterly":
+            return 4 // 1 year of quarterly notifications
+        case "Yearly":
+            return 2 // 2 years of yearly notifications
+        default:
+            return 12 // Default to monthly
         }
     }
     
@@ -243,6 +278,89 @@ class NotificationManager: ObservableObject {
                 print("✅ Recurring payment \(index) scheduled for \(subscription.serviceName)")
             }
         }
+    }
+    
+    // MARK: - Renewal Reminder
+    private func scheduleRenewalReminder(for subscription: Subscription, endDate: Date) {
+        let calendar = Calendar.current
+        let reminderDate = calendar.date(byAdding: .day, value: -subscription.renewalReminderDays, to: endDate)
+        
+        // Don't schedule if reminder date is in the past
+        guard let reminderDate = reminderDate, reminderDate > Date() else { return }
+        
+        // Schedule renewal reminder notification
+        let content = UNMutableNotificationContent()
+        content.title = "🔄 Subscription Renewal Reminder"
+        content.body = "Your \(subscription.serviceName) subscription expires on \(formatDate(endDate)). Don't forget to renew!"
+        content.sound = .default
+        content.badge = 1
+        content.categoryIdentifier = "SUBSCRIPTION_RENEWAL"
+        content.userInfo = [
+            "subscriptionId": subscription.persistentModelID.hashValue,
+            "serviceName": subscription.serviceName,
+            "amount": subscription.monthlyCost,
+            "category": subscription.category,
+            "endDate": endDate.timeIntervalSince1970,
+            "type": "renewal_reminder"
+        ]
+        
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: reminderDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let identifier = "\(generateNotificationId(for: subscription))_renewal"
+        
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling renewal reminder: \(error)")
+            } else {
+                print("✅ Renewal reminder scheduled for \(subscription.serviceName) (\(subscription.renewalReminderDays) days before expiry)")
+            }
+        }
+        
+        // Schedule final expiry notification
+        scheduleExpiryNotification(for: subscription, endDate: endDate)
+    }
+    
+    private func scheduleExpiryNotification(for subscription: Subscription, endDate: Date) {
+        // Don't schedule if expiry date is in the past
+        guard endDate > Date() else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = "⚠️ Subscription Expired"
+        content.body = "Your \(subscription.serviceName) subscription has expired today. Renew to continue access."
+        content.sound = .default
+        content.badge = 1
+        content.categoryIdentifier = "SUBSCRIPTION_EXPIRED"
+        content.userInfo = [
+            "subscriptionId": subscription.persistentModelID.hashValue,
+            "serviceName": subscription.serviceName,
+            "amount": subscription.monthlyCost,
+            "category": subscription.category,
+            "type": "subscription_expired"
+        ]
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: endDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let identifier = "\(generateNotificationId(for: subscription))_expired"
+        
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error scheduling expiry notification: \(error)")
+            } else {
+                print("✅ Expiry notification scheduled for \(subscription.serviceName)")
+            }
+        }
+    }
+    
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
     
     // MARK: - Helper Methods

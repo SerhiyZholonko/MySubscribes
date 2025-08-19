@@ -2,351 +2,345 @@
 //  AddSubscriptionView.swift
 //  MySubscribes
 //
-//  Created by apple on 21.06.2025.
+//  Created by apple on 20.06.2025.
 //
+
 import SwiftUI
 import SwiftData
 
-// MARK: - Keyboard Dismissal Extension
-extension View {
-    func dismissKeyboardOnTap() -> some View {
-        self.onTapGesture {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        }
-    }
-    
-    func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+// MARK: - Simple Button Style
+struct SimpleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
     }
 }
 
-// MARK: - View
+// MARK: - Add Subscription View
 struct AddSubscriptionView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
-    
     @State private var viewModel = AddSubscriptionViewModel()
-    @State private var showContent = false
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         NavigationView {
-            ZStack {
-                // Background
-                DesignSystem.Colors.backgroundGradient
-                    .ignoresSafeArea()
+            VStack(spacing: 0) {
+                // Simple Header
+                HStack {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .buttonStyle(SimpleButtonStyle())
+                    
+                    Spacer()
+                    
+                    Text("Add Subscription")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Spacer()
+                    
+                    Button("Save") {
+                        viewModel.saveSubscription()
+                    }
+                    .buttonStyle(SimpleButtonStyle())
+                    .disabled(viewModel.serviceNameText.isEmpty || viewModel.monthlyCostText.isEmpty)
+                }
+                .padding()
+                .background(Color(UIColor.systemBackground))
                 
-                VStack(spacing: 0) {
-                    // Header
-                    ModalHeaderView(
-                        title: "Add Subscription",
-                        onSave: {
-                            hideKeyboard()
-                            viewModel.saveSubscription()
-                        },
-                        onCancel: {
-                            hideKeyboard()
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                dismiss()
+                // Content
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Service Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Service Name")
+                                .font(.headline)
+                            
+                            TextField("Netflix, Spotify, etc.", text: $viewModel.serviceNameText)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Monthly Cost
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Monthly Cost")
+                                .font(.headline)
+                            
+                            TextField("9.99", text: $viewModel.monthlyCostText)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .keyboardType(.decimalPad)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Simple Billing Period
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Billing Period")
+                                .font(.headline)
+                            
+                            HStack {
+                                ForEach(["Weekly", "Monthly", "Yearly"], id: \.self) { period in
+                                    Button(action: {
+                                        viewModel.selectedPeriod = period
+                                        let impact = UIImpactFeedbackGenerator(style: .light)
+                                        impact.impactOccurred()
+                                    }) {
+                                        Text(period)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                viewModel.selectedPeriod == period ?
+                                                Color.blue : Color.gray.opacity(0.2)
+                                            )
+                                            .foregroundColor(
+                                                viewModel.selectedPeriod == period ?
+                                                .white : .primary
+                                            )
+                                            .cornerRadius(8)
+                                    }
+                                    .buttonStyle(SimpleButtonStyle())
+                                }
                             }
                         }
-                    )
-                    .opacity(showContent ? 1.0 : 0)
-                    .offset(y: showContent ? 0 : -30)
-                    
-                    // Form Content
-                    ScrollView {
-                        VStack(spacing: DesignSystem.Spacing.lg) {
-                            // Basic Information
-                            ServiceNameView(serviceNameText: $viewModel.serviceNameText)
-                                .opacity(showContent ? 1.0 : 0)
-                                .offset(y: showContent ? 0 : 20)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Next Payment Date
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Next Payment Date")
+                                .font(.headline)
                             
-                            MonthlyCostView(monthlyCostText: $viewModel.monthlyCostText)
-                                .opacity(showContent ? 1.0 : 0)
-                                .offset(y: showContent ? 0 : 20)
-                            
-                            BillingPeriodView(selectedPeriod: $viewModel.selectedPeriod)
-                                .opacity(showContent ? 1.0 : 0)
-                                .offset(y: showContent ? 0 : 20)
-                            
-                            // Enhanced Date Picker
-                            EnhancedDatePickerView(nextPaymentDate: $viewModel.nextPaymentDate)
-                                .opacity(showContent ? 1.0 : 0)
-                                .offset(y: showContent ? 0 : 20)
-                            
-                            // Repetition Settings
-                            RepetitionSettingsView(
-                                isRecurring: $viewModel.isRecurring,
-                                endDate: $viewModel.endDate
-                            )
-                            .opacity(showContent ? 1.0 : 0)
-                            .offset(y: showContent ? 0 : 20)
-                            
-                            // Category Selection
-                            CategorySelectionView(
-                                selectedCategory: $viewModel.selectedCategory,
-                                categories: viewModel.categories
-                            )
-                            .opacity(showContent ? 1.0 : 0)
-                            .offset(y: showContent ? 0 : 20)
-                            
-                            // Color Selection
-                            ColorSelectionView(
-                                selectedColor: $viewModel.selectedColor,
-                                colors: viewModel.colors
-                            )
-                            .opacity(showContent ? 1.0 : 0)
-                            .offset(y: showContent ? 0 : 20)
-                            
-                            // Reminder Settings
-                            ReminderSettingsView(
-                                reminderDays: $viewModel.reminderDays,
-                                reminderOptions: viewModel.reminderOptions
-                            )
-                            .opacity(showContent ? 1.0 : 0)
-                            .offset(y: showContent ? 0 : 20)
-                            
-                            // Notes
-                            NotesView(notes: $viewModel.notes)
-                                .opacity(showContent ? 1.0 : 0)
-                                .offset(y: showContent ? 0 : 20)
+                            DatePicker("", selection: $viewModel.nextPaymentDate, displayedComponents: .date)
+                                .datePickerStyle(CompactDatePickerStyle())
                         }
-                        .padding(.horizontal, DesignSystem.Spacing.md)
-                        .padding(.top, DesignSystem.Spacing.lg)
-                        .padding(.bottom, DesignSystem.Spacing.xxl)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Simple Color Selection
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Color")
+                                .font(.headline)
+                            
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+                                ForEach(["red", "blue", "green", "orange", "purple", "pink", "cyan", "yellow", "brown", "gray"], id: \.self) { color in
+                                    Button(action: {
+                                        viewModel.selectedColor = color
+                                        let impact = UIImpactFeedbackGenerator(style: .light)
+                                        impact.impactOccurred()
+                                    }) {
+                                        Circle()
+                                            .fill(colorForString(color))
+                                            .frame(width: 40, height: 40)
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.white, lineWidth: viewModel.selectedColor == color ? 3 : 0)
+                                            )
+                                            .overlay(
+                                                viewModel.selectedColor == color ?
+                                                Image(systemName: "checkmark")
+                                                    .foregroundColor(.white)
+                                                    .font(.system(size: 16, weight: .bold)) : nil
+                                            )
+                                    }
+                                    .buttonStyle(SimpleButtonStyle())
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Simple Category Selection
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Category")
+                                .font(.headline)
+                            
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
+                                ForEach(["Entertainment", "Music", "Productivity", "News", "Health", "Other"], id: \.self) { category in
+                                    Button(action: {
+                                        viewModel.selectedCategory = category
+                                        let impact = UIImpactFeedbackGenerator(style: .light)
+                                        impact.impactOccurred()
+                                    }) {
+                                        Text(category)
+                                            .font(.caption)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                viewModel.selectedCategory == category ?
+                                                Color.blue : Color.gray.opacity(0.2)
+                                            )
+                                            .foregroundColor(
+                                                viewModel.selectedCategory == category ?
+                                                .white : .primary
+                                            )
+                                            .cornerRadius(6)
+                                    }
+                                    .buttonStyle(SimpleButtonStyle())
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Repetition Settings
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Repetition Settings")
+                                .font(.headline)
+                            
+                            Toggle("Recurring Subscription", isOn: $viewModel.isRecurring)
+                                .toggleStyle(SwitchToggleStyle())
+                            
+                            if viewModel.isRecurring {
+                                Toggle("Set End Date", isOn: Binding(
+                                    get: { viewModel.endDate != nil },
+                                    set: { hasEndDate in
+                                        if hasEndDate {
+                                            viewModel.endDate = Calendar.current.date(byAdding: .year, value: 1, to: Date())
+                                        } else {
+                                            viewModel.endDate = nil
+                                        }
+                                    }
+                                ))
+                                .toggleStyle(SwitchToggleStyle())
+                                
+                                if viewModel.endDate != nil {
+                                    DatePicker("End Date", selection: Binding(
+                                        get: { viewModel.endDate ?? Date() },
+                                        set: { viewModel.endDate = $0 }
+                                    ), displayedComponents: .date)
+                                    .datePickerStyle(CompactDatePickerStyle())
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Reminder Settings
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Reminder Settings")
+                                .font(.headline)
+                            
+                            VStack(spacing: 8) {
+                                ForEach([(1, "1 day before"), (3, "3 days before"), (7, "1 week before")], id: \.0) { days, text in
+                                    Button(action: {
+                                        viewModel.reminderDays = days
+                                        let impact = UIImpactFeedbackGenerator(style: .light)
+                                        impact.impactOccurred()
+                                    }) {
+                                        HStack {
+                                            Text(text)
+                                                .foregroundColor(.primary)
+                                            Spacer()
+                                            if viewModel.reminderDays == days {
+                                                Image(systemName: "checkmark.circle.fill")
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
+                                        .padding()
+                                        .background(
+                                            viewModel.reminderDays == days ?
+                                            Color.blue.opacity(0.1) : Color.gray.opacity(0.1)
+                                        )
+                                        .cornerRadius(8)
+                                    }
+                                    .buttonStyle(SimpleButtonStyle())
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Renewal Reminders
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Renewal Reminders")
+                                .font(.headline)
+                            
+                            Toggle("Enable Renewal Reminders", isOn: $viewModel.renewalReminderEnabled)
+                                .toggleStyle(SwitchToggleStyle())
+                            
+                            if viewModel.renewalReminderEnabled && viewModel.endDate != nil {
+                                VStack(spacing: 8) {
+                                    ForEach([(7, "1 week before expiry"), (30, "1 month before expiry")], id: \.0) { days, text in
+                                        Button(action: {
+                                            viewModel.renewalReminderDays = days
+                                            let impact = UIImpactFeedbackGenerator(style: .light)
+                                            impact.impactOccurred()
+                                        }) {
+                                            HStack {
+                                                Text(text)
+                                                    .foregroundColor(.primary)
+                                                Spacer()
+                                                if viewModel.renewalReminderDays == days {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .foregroundColor(.blue)
+                                                }
+                                            }
+                                            .padding()
+                                            .background(
+                                                viewModel.renewalReminderDays == days ?
+                                                Color.blue.opacity(0.1) : Color.gray.opacity(0.1)
+                                            )
+                                            .cornerRadius(8)
+                                        }
+                                        .buttonStyle(SimpleButtonStyle())
+                                    }
+                                }
+                            } else if viewModel.renewalReminderEnabled && viewModel.endDate == nil {
+                                Text("Set an end date to enable renewal reminders")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding()
+                                    .background(Color.yellow.opacity(0.1))
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Notes
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Notes")
+                                .font(.headline)
+                            
+                            TextField("Add any additional notes...", text: $viewModel.notes, axis: .vertical)
+                                .lineLimit(3...6)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Spacer(minLength: 50)
                     }
+                    .padding()
                 }
+                .background(Color(UIColor.systemGroupedBackground))
             }
         }
         .navigationBarHidden(true)
-        .dismissKeyboardOnTap()
         .onAppear {
             viewModel.setModelContext(modelContext)
-            
-            // Animate content appearance
-            withAnimation(.easeOut(duration: 0.6).delay(0.1)) {
-                showContent = true
-            }
         }
         .onChange(of: viewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    dismiss()
-                }
+                dismiss()
             }
         }
-        .overlay {
-                       if viewModel.showingAlert {
-                           ZStack {
-                               // Background overlay
-                               Color.black
-                                   .opacity(0.2)
-                                   .ignoresSafeArea()
-                                   .transition(.opacity)
-                               
-                               // Enhanced alert
-                               EnhancedAlert(
-                                   message: viewModel.alertMessage,
-                                   isShowing: $viewModel.showingAlert
-                               )
-                           }
-                           .transition(.opacity)
-                       }            
-        }
-    }
-}
-
-// MARK: - Enhanced Alert Animation
-struct EnhancedAlert: View {
-    let message: String
-    @Binding var isShowing: Bool
-    @State private var scale: CGFloat = 0.5
-    @State private var opacity: Double = 0.0
-    @State private var offset: CGFloat = -50
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Icon with pulse animation
-            Image(systemName: "checkmark.circle.fill")
-                .resizable()
-                .frame(width: 60, height: 60)
-                .foregroundStyle(.white)
-                .background(
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 80, height: 80)
-                )
-                .scaleEffect(scale)
-                .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
-            
-            // Message text
-            Text(message)
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
-        }
-        .padding(.vertical, 30)
-        .padding(.horizontal, 40)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
-        )
-        .scaleEffect(scale)
-        .opacity(opacity)
-        .offset(y: offset)
-        .onAppear {
-            showAlert()
-        }
-        .onChange(of: isShowing) { _, newValue in
-            if !newValue {
-                hideAlert()
-            }
-        }
-    }
-    
-    private func showAlert() {
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0)) {
-            scale = 1.0
-            opacity = 1.0
-            offset = 0
-        }
-        
-        // Auto dismiss after 3 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            hideAlert()
-        }
-    }
-    
-    private func hideAlert() {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            scale = 0.8
-            opacity = 0.0
-            offset = -30
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            isShowing = false
-        }
-    }
-}
-// MARK: - Alternative Simple Implementation
-extension AddSubscriptionView {
-    var simpleImprovedAlert: some View {
-        VStack(spacing: 20) {
-            // Animated checkmark
-            Image(systemName: "checkmark.circle.fill")
-                .resizable()
-                .frame(width: 60, height: 60)
-                .foregroundStyle(.white, .green)
-                .scaleEffect(viewModel.showingAlert ? 1.0 : 0.3)
-                .rotationEffect(.degrees(viewModel.showingAlert ? 0 : -180))
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: viewModel.showingAlert)
-            
-            // Message with typewriter effect
+        .alert("Subscription", isPresented: $viewModel.showingAlert) {
+            Button("OK") { }
+        } message: {
             Text(viewModel.alertMessage)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.center)
-                .scaleEffect(viewModel.showingAlert ? 1.0 : 0.8)
-                .opacity(viewModel.showingAlert ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.5).delay(0.2), value: viewModel.showingAlert)
-        }
-        .padding(.horizontal, 40)
-        .padding(.vertical, 30)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 8)
-        )
-        .scaleEffect(viewModel.showingAlert ? 1.0 : 0.1)
-        .opacity(viewModel.showingAlert ? 1.0 : 0.0)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: viewModel.showingAlert)
-        .onAppear {
-            if viewModel.showingAlert {
-                // Auto dismiss after 3 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                    withAnimation(.easeInOut(duration: 0.4)) {
-                        viewModel.showingAlert = false
-                    }
-                }
-            }
         }
     }
-}
-
-// MARK: - Modal Header View
-struct ModalHeaderView: View {
-    let title: String
-    let onSave: () -> Void
-    let onCancel: () -> Void
-    @State private var saveButtonPressed = false
-    @State private var cancelButtonPressed = false
     
-    var body: some View {
-        HStack {
-            // Cancel Button
-            Button("Cancel") {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                impactFeedback.impactOccurred()
-                onCancel()
-            }
-            .font(DesignSystem.Typography.body)
-            .foregroundColor(DesignSystem.Colors.textSecondary)
-            .scaleEffect(cancelButtonPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: cancelButtonPressed)
-            .onLongPressGesture(minimumDuration: 0) {
-                cancelButtonPressed = true
-            } onPressingChanged: { pressing in
-                cancelButtonPressed = pressing
-            }
-            
-            Spacer()
-            
-            // Title
-            Text(title)
-                .font(DesignSystem.Typography.title2)
-                .foregroundColor(DesignSystem.Colors.textPrimary)
-                .fontWeight(.semibold)
-            
-            Spacer()
-            
-            // Save Button
-            Button {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                impactFeedback.impactOccurred()
-                onSave()
-            } label: {
-                Text("Save")
-            }
-
-            .font(DesignSystem.Typography.body)
-            .fontWeight(.semibold)
-            .foregroundColor(DesignSystem.Colors.primary)
-            .padding(.horizontal, DesignSystem.Spacing.md)
-            .padding(.vertical, DesignSystem.Spacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm)
-                    .fill(DesignSystem.Colors.primaryLight)
-            )
-            .scaleEffect(saveButtonPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: saveButtonPressed)
-            .onLongPressGesture(minimumDuration: 0) {
-                saveButtonPressed = true
-            } onPressingChanged: { pressing in
-                saveButtonPressed = pressing
-            }
+    private func colorForString(_ colorName: String) -> Color {
+        switch colorName {
+        case "red": return .red
+        case "blue": return .blue
+        case "green": return .green
+        case "orange": return .orange
+        case "purple": return .purple
+        case "pink": return .pink
+        case "cyan": return .cyan
+        case "yellow": return .yellow
+        case "brown": return .brown
+        case "gray": return .gray
+        default: return .blue
         }
-        .padding(.horizontal, DesignSystem.Spacing.lg)
-        .padding(.vertical, DesignSystem.Spacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.lg)
-                .fill(.regularMaterial)
-        )
-        .padding(.horizontal, DesignSystem.Spacing.md)
     }
 }
 
+#Preview {
+    AddSubscriptionView()
+}

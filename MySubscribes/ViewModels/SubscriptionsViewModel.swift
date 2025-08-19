@@ -203,6 +203,23 @@ class SubscriptionsViewModel: ObservableObject {
         showingDeleteAlert = false
     }
     
+    func markPaymentAsPaid(_ subscription: Subscription) {
+        guard let modelContext = modelContext else { return }
+        
+        // Mark payment as paid and update next payment date
+        subscription.markAsPaid()
+        
+        // Cancel old notifications and schedule new ones for the new payment date
+        NotificationManager.shared.scheduleAdvancedNotifications(for: subscription)
+        
+        do {
+            try modelContext.save()
+            print("✅ Payment marked as paid for \(subscription.serviceName)")
+        } catch {
+            print("❌ Error marking payment as paid: \(error)")
+        }
+    }
+    
     // Calculate total monthly spending
     var totalMonthlySpending: Double {
         subscriptions.reduce(0) { total, subscription in

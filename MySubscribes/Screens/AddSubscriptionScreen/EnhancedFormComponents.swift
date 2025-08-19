@@ -200,11 +200,15 @@ struct CategoryButton: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0) {
-            isPressed = true
-        } onPressingChanged: { pressing in
-            isPressed = pressing
-        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                }
+        )
     }
 }
 
@@ -304,11 +308,15 @@ struct ColorButton: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.9 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0) {
-            isPressed = true
-        } onPressingChanged: { pressing in
-            isPressed = pressing
-        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                }
+        )
     }
 }
 
@@ -409,11 +417,15 @@ struct ReminderOptionButton: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isPressed ? 0.98 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0) {
-            isPressed = true
-        } onPressingChanged: { pressing in
-            isPressed = pressing
-        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                }
+        )
     }
 }
 
@@ -458,5 +470,157 @@ struct NotesView: View {
                 showContent = true
             }
         }
+    }
+}
+
+// MARK: - Renewal Reminder Settings View
+struct RenewalReminderSettingsView: View {
+    @Binding var renewalReminderEnabled: Bool
+    @Binding var renewalReminderDays: Int
+    @Binding var endDate: Date?
+    let renewalReminderOptions: [(Int, String)]
+    @State private var showContent = false
+    
+    var body: some View {
+        VStack(spacing: DesignSystem.Spacing.md) {
+            // Header
+            HStack {
+                Image(systemName: "arrow.clockwise.circle")
+                    .font(.title2)
+                    .foregroundColor(DesignSystem.Colors.accent)
+                
+                Text("Renewal Reminders")
+                    .font(DesignSystem.Typography.headline)
+                    .foregroundColor(DesignSystem.Colors.textPrimary)
+                
+                Spacer()
+            }
+            
+            if showContent {
+                VStack(spacing: DesignSystem.Spacing.md) {
+                    // Enable/Disable Toggle
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Renewal Reminders")
+                                .font(.body)
+                                .foregroundColor(DesignSystem.Colors.textPrimary)
+                            
+                            Text("Get notified before subscription expires")
+                                .font(.caption)
+                                .foregroundColor(DesignSystem.Colors.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Toggle("", isOn: $renewalReminderEnabled)
+                            .toggleStyle(SwitchToggleStyle(tint: DesignSystem.Colors.accent))
+                    }
+                    
+                    // Show options only if enabled and has end date
+                    if renewalReminderEnabled && endDate != nil {
+                        VStack(spacing: DesignSystem.Spacing.sm) {
+                            HStack {
+                                Text("Remind me:")
+                                    .font(.subheadline)
+                                    .foregroundColor(DesignSystem.Colors.textSecondary)
+                                Spacer()
+                            }
+                            
+                            ForEach(renewalReminderOptions, id: \.0) { option in
+                                RenewalReminderOptionButton(
+                                    days: option.0,
+                                    text: option.1,
+                                    isSelected: renewalReminderDays == option.0,
+                                    action: {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            renewalReminderDays = option.0
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        ))
+                    } else if renewalReminderEnabled && endDate == nil {
+                        // Show message that end date is required
+                        HStack {
+                            Image(systemName: "info.circle")
+                                .foregroundColor(DesignSystem.Colors.accent)
+                            
+                            Text("Set an end date to enable renewal reminders")
+                                .font(.caption)
+                                .foregroundColor(DesignSystem.Colors.textSecondary)
+                            
+                            Spacer()
+                        }
+                        .padding(.vertical, DesignSystem.Spacing.sm)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        ))
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
+            }
+        }
+        .cardStyle()
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6).delay(0.8)) {
+                showContent = true
+            }
+        }
+    }
+}
+
+// MARK: - Renewal Reminder Option Button
+struct RenewalReminderOptionButton: View {
+    let days: Int
+    let text: String
+    let isSelected: Bool
+    let action: () -> Void
+    @State private var isPressed = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(text)
+                    .font(.body)
+                    .foregroundColor(isSelected ? .white : DesignSystem.Colors.textPrimary)
+                
+                Spacer()
+                
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(DesignSystem.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm)
+                    .fill(isSelected ? DesignSystem.Colors.accent : DesignSystem.Colors.textTertiary.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.sm)
+                            .stroke(isSelected ? DesignSystem.Colors.accent : Color.clear, lineWidth: 1)
+                    )
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    isPressed = true
+                }
+                .onEnded { _ in
+                    isPressed = false
+                }
+        )
     }
 }
